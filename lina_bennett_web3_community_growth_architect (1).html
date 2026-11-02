@@ -1,0 +1,2738 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINA BENNETT // Web3 Community & Growth Architect [LVL 27]</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js r128 for Low-Poly 3D World -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts: Chakra Petch, Syne & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['"Chakra Petch"', 'sans-serif'],
+                        syne: ['"Syne"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        muck: {
+                            grass: '#4ade80',
+                            emerald: '#10b981',
+                            rune: '#00f5d4',
+                            cyan: '#22d3ee',
+                            magma: '#ff6b35',
+                            gold: '#facc15',
+                            slate: '#0f172a',
+                            cavern: '#1e293b',
+                            boss: '#f43f5e',
+                            purple: '#a855f7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --accent-cyan: #22d3ee;
+            --accent-emerald: #4ade80;
+            --accent-magma: #ff6b35;
+            --accent-gold: #facc15;
+            --bg-glass: rgba(11, 17, 30, 0.78);
+            --border-faceted: rgba(34, 211, 238, 0.28);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        p, span, h1, h2, h3, h4, input, textarea {
+            user-select: text;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #070b14;
+            color: #f1f5f9;
+            font-family: 'Chakra Petch', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* 3D Canvas Fixed Background */
+        #world-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            display: block;
+            cursor: crosshair;
+        }
+
+        /* 2D Slash & Damage Overlay Canvas */
+        #fx-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 45;
+            pointer-events: none;
+        }
+
+        /* Faceted Low-Poly Card Styling (Clip-Path Chamfered Corners) */
+        .poly-card {
+            background: rgba(10, 16, 29, 0.82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .poly-card:hover {
+            border-color: rgba(34, 211, 238, 0.55);
+            box-shadow: 0 16px 40px -8px rgba(34, 211, 238, 0.18), inset 0 1px 0 0 rgba(34, 211, 238, 0.3);
+        }
+
+        /* Chamfered Low-Poly Button */
+        .poly-btn {
+            clip-path: polygon(10px 0%, 100% 0%, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% 10px);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .poly-btn:active {
+            transform: translateY(2px) scale(0.98);
+        }
+
+        /* Rune Glow Text */
+        .rune-glow {
+            text-shadow: 0 0 14px rgba(34, 211, 238, 0.65), 0 0 30px rgba(34, 211, 238, 0.25);
+        }
+
+        .magma-glow {
+            text-shadow: 0 0 14px rgba(255, 107, 53, 0.7), 0 0 28px rgba(255, 107, 53, 0.3);
+        }
+
+        .emerald-glow {
+            text-shadow: 0 0 14px rgba(74, 222, 128, 0.65);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070b14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #22d3ee;
+        }
+
+        /* Risk of Rain 2 Item Rarity Borders */
+        .rarity-common { border-color: rgba(226, 232, 240, 0.45); --rarity-color: #e2e8f0; }
+        .rarity-uncommon { border-color: rgba(74, 222, 128, 0.65); --rarity-color: #4ade80; }
+        .rarity-legendary { border-color: rgba(244, 63, 94, 0.75); --rarity-color: #f43f5e; }
+        .rarity-boss { border-color: rgba(250, 204, 21, 0.8); --rarity-color: #facc15; }
+        .rarity-lunar { border-color: rgba(56, 189, 248, 0.8); --rarity-color: #38bdf8; }
+
+        .item-slot:hover {
+            box-shadow: 0 0 22px -2px var(--rarity-color);
+            transform: translateY(-3px) scale(1.03);
+        }
+
+        /* Animated Diagonal Stripes for HP & Teleporter Bars */
+        .bar-stripes {
+            background-image: linear-gradient(
+                45deg,
+                rgba(255, 255, 255, 0.15) 25%,
+                transparent 25%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.15) 50%,
+                rgba(255, 255, 255, 0.15) 75%,
+                transparent 75%,
+                transparent
+            );
+            background-size: 20px 20px;
+            animation: moveStripes 1.2s linear infinite;
+        }
+
+        @keyframes moveStripes {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 0; }
+        }
+
+        /* Floating Animation */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-float {
+            animation: floatSlow 4s ease-in-out infinite;
+        }
+
+        /* Hide UI Mode for Full 3D Inspection */
+        body.free-look-mode #main-content,
+        body.free-look-mode #bottom-hud {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+        }
+        #main-content, #bottom-hud {
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        body.at-island-edge #bottom-hud {
+            opacity: 0.22;
+        }
+        body.at-island-edge #bottom-hud:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="selection:bg-cyan-400 selection:text-slate-950">
+
+    <!-- 3D LOW-POLY WORLD CANVAS (MUCK + RISK OF RAIN 2 FLOATING ISLAND) -->
+    <canvas id="world-canvas" title="Click anywhere to swing blade & farm XP! Drag to rotate island."></canvas>
+
+    <!-- 2D SLASH & FLOATING DAMAGE NUMBERS CANVAS -->
+    <canvas id="fx-overlay"></canvas>
+
+    <!-- =====================================================================
+         TOP GAME HUD OVERLAY (Navigation + Biome Switcher + RoR2 Difficulty Bar)
+         ===================================================================== -->
+    <header class="fixed top-0 left-0 right-0 z-40 px-3 sm:px-6 py-3 pointer-events-none">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Left: Survivor Identity & Biome Switcher -->
+            <div class="flex items-center gap-2 sm:gap-3 pointer-events-auto">
+                <a href="#spawn" class="poly-card px-3.5 py-2 rounded-lg flex items-center gap-2.5 border border-cyan-400/40 group">
+                    <!-- Glowing Muck Rune Icon -->
+                    <div class="w-7 h-7 rounded bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 font-mono font-bold text-base group-hover:bg-cyan-400 group-hover:text-slate-950 transition-colors">
+                        ᛉ
+                    </div>
+                    <div>
+                        <div class="font-mono text-xs font-extrabold tracking-wider text-white flex items-center gap-1.5">
+                            LINA.ETH
+                            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        </div>
+                        <div class="font-mono text-[10px] text-cyan-300/80 tracking-widest uppercase">
+                            SURVIVOR // GROWTH_ARCHITECT
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Biome Switcher Pills -->
+                <div class="hidden xl:flex items-center poly-card p-1 rounded-lg border border-slate-700/80">
+                    <button onclick="setBiome(0)" id="biome-btn-0" class="biome-btn px-2.5 py-1 rounded text-[11px] font-mono font-semibold transition-all bg-emerald-500/20 text-emerald-300 border border-emerald-400/50">
+                        [01] EMERALD_ISLAND
+                    </button>
+                    <button onclick="setBiome(1)" id="biome-btn-1" class="biome-btn px-2.5 py-1 rounded text-[11px] font-mono font-semibold transition-all text-slate-400 hover:text-cyan-300">
+                        [02] RUNE_CAVERN
+                    </button>
+                    <button onclick="setBiome(2)" id="biome-btn-2" class="biome-btn px-2.5 py-1 rounded text-[11px] font-mono font-semibold transition-all text-slate-400 hover:text-amber-300">
+                        [03] TELEPORTER_NIGHT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Center: Section Links -->
+            <nav class="hidden lg:flex items-center gap-1 poly-card px-2 py-1.5 rounded-lg pointer-events-auto">
+                <a href="#spawn" class="px-2.5 py-1 rounded text-xs font-mono text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">00.SPAWN</a>
+                <a href="#about" class="px-2.5 py-1 rounded text-xs font-mono text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">01.LOADOUT</a>
+                <a href="#experience" class="px-2.5 py-1 rounded text-xs font-mono text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">02.RUN_LOGS</a>
+                <a href="#community" class="px-2.5 py-1 rounded text-xs font-mono text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">03.SHRINES</a>
+                <a href="#growth" class="px-2.5 py-1 rounded text-xs font-mono text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">04.TELEMETRY</a>
+                <a href="#contact" class="px-2.5 py-1 rounded text-xs font-mono text-amber-300 bg-amber-500/10 border border-amber-400/30 hover:bg-amber-400 hover:text-slate-950 transition-colors">05.CO-OP</a>
+            </nav>
+
+            <!-- Right: Risk of Rain 2 Difficulty Scaling Bar + Controls -->
+            <div class="flex items-center gap-2 pointer-events-auto">
+                <!-- RoR2 Difficulty Scaling Widget -->
+                <div class="poly-card px-3 py-1.5 rounded-lg border border-slate-700/80 flex items-center gap-3">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-1.5 font-mono text-xs font-bold text-white">
+                            <span class="text-slate-400 text-[10px]">RUN TIME</span>
+                            <span id="hud-timer" class="text-cyan-300">04:12</span>
+                        </div>
+                        <div id="hud-diff-label" class="font-mono text-[10px] font-extrabold tracking-wider text-emerald-400 uppercase">
+                            STAGE: HARD // ORGANIC_GROWTH
+                        </div>
+                    </div>
+                    <!-- Segmented Difficulty Bar -->
+                    <div class="w-24 sm:w-28 h-6 bg-slate-950 rounded border border-slate-700 overflow-hidden relative flex flex-col justify-between p-0.5">
+                        <div class="w-full h-3 flex rounded-sm overflow-hidden opacity-90">
+                            <div class="w-1/5 bg-emerald-500"></div>
+                            <div class="w-1/5 bg-yellow-400"></div>
+                            <div class="w-1/5 bg-orange-500"></div>
+                            <div class="w-1/5 bg-rose-600"></div>
+                            <div class="w-1/5 bg-purple-600"></div>
+                        </div>
+                        <!-- Moving Difficulty Marker -->
+                        <div id="hud-diff-cursor" class="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_8px_#fff] transition-all duration-300" style="left: 42%;"></div>
+                        <div class="text-[8px] font-mono text-center text-slate-300 leading-none tracking-tighter">
+                            MARKET SCALING
+                        </div>
+                    </div>
+                    <button onclick="toggleOverclock()" id="overclock-btn" title="Speed up Market Cycle" class="px-2 py-1 rounded bg-slate-800 hover:bg-rose-500/20 border border-slate-600 hover:border-rose-400 text-[10px] font-mono text-slate-300 hover:text-rose-300 transition-all">
+                        1x
+                    </button>
+                </div>
+
+                <!-- SFX Audio Synth Toggle -->
+                <button onclick="toggleAudio()" id="sfx-btn" title="Toggle Low-Poly Synth SFX" class="poly-card p-2 rounded-lg text-xs font-mono text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 transition-all flex items-center gap-1">
+                    <span id="sfx-icon">🔊</span>
+                    <span class="hidden sm:inline text-[10px]">SFX</span>
+                </button>
+
+                <!-- Free-Look 3D Island Mode Toggle -->
+                <button onclick="toggleFreeLook()" id="freelook-btn" title="Hide UI & Inspect 3D Island [Hotkey: V]" class="poly-card px-2.5 py-2 rounded-lg text-[10px] font-mono font-bold text-emerald-300 border border-emerald-500/30 hover:border-emerald-400 transition-all">
+                    👁️ 3D VIEW
+                </button>
+
+                <!-- Secrets Modal Trigger [?] -->
+                <button onclick="toggleSecretsModal()" title="Keyboard Shortcuts & World Secrets [Hotkey: ?]" class="poly-card px-2.5 py-2 rounded-lg text-[10px] font-mono font-bold text-amber-300 border border-amber-500/30 hover:border-amber-400 transition-all">
+                    ?
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- =====================================================================
+         BOTTOM GAME HUD OVERLAY (Muck / RoR2 Health Bar, Shield, XP & Wallet)
+         ===================================================================== -->
+    <div id="bottom-hud" class="fixed bottom-2.5 left-3 right-3 z-40 pointer-events-none flex flex-col sm:flex-row items-start sm:items-end justify-between gap-2.5 max-w-7xl mx-auto">
+        
+        <!-- Bottom-Left: Survivor Health, Retention Shield & XP Bar -->
+        <div class="poly-card p-2.5 sm:p-3 rounded-xl border border-slate-700/80 w-full sm:w-96 pointer-events-auto shadow-2xl">
+            <div class="flex items-center justify-between mb-1.5 font-mono text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="px-1.5 py-0.5 rounded bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 font-bold text-[11px]">
+                        LVL <span id="hud-lvl">27</span>
+                    </span>
+                    <span class="font-bold text-white tracking-wide">LINA_BENNETT</span>
+                </div>
+                <button onclick="triggerManualSlash()" class="text-[10px] font-mono text-amber-300 hover:text-amber-200 underline decoration-dotted">
+                    [⚔️ SWING BLADE +XP]
+                </button>
+            </div>
+
+            <!-- Green Health Bar (Muck / RoR2 Style) -->
+            <div class="w-full h-5 bg-slate-950 rounded border border-slate-700 relative overflow-hidden mb-1.5">
+                <div id="hud-hp-bar" class="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-lime-400 bar-stripes transition-all duration-300" style="width: 100%;"></div>
+                <div class="absolute inset-0 flex items-center justify-between px-2 font-mono text-[11px] font-extrabold text-white drop-shadow">
+                    <span>HP // COMMUNITY_VITALITY</span>
+                    <span id="hud-hp-text">1,850 / 1,850</span>
+                </div>
+            </div>
+
+            <!-- Cyan Shield / Retention & XP Bar -->
+            <div class="grid grid-cols-2 gap-1.5">
+                <div class="h-3.5 bg-slate-950 rounded border border-slate-800 relative overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-cyan-600 to-cyan-400" style="width: 94.2%;"></div>
+                    <div class="absolute inset-0 flex items-center justify-between px-1.5 font-mono text-[9px] font-bold text-white">
+                        <span>SHIELD</span>
+                        <span>94.2% D30</span>
+                    </div>
+                </div>
+                <div class="h-3.5 bg-slate-950 rounded border border-slate-800 relative overflow-hidden">
+                    <div id="hud-xp-bar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-200" style="width: 65%;"></div>
+                    <div class="absolute inset-0 flex items-center justify-between px-1.5 font-mono text-[9px] font-bold text-slate-950">
+                        <span class="text-white mix-blend-difference">XP</span>
+                        <span id="hud-xp-text" class="text-white mix-blend-difference">650 / 1000</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom-Right: Web3 ENS / Wallet Badge & Interactive Hint -->
+        <div class="hidden md:flex items-center gap-2.5 pointer-events-auto">
+            <div class="poly-card px-3 py-2 rounded-xl border border-slate-700/80 text-[11px] font-mono text-slate-300 flex items-center gap-2">
+                <span class="text-cyan-400">🖱️ TIP:</span>
+                <span>Click anywhere on the 3D island or cards to deal <strong class="text-emerald-300">Growth Crits</strong>!</span>
+            </div>
+            <button onclick="copyWallet()" class="poly-card px-3.5 py-2 rounded-xl border border-cyan-500/40 hover:border-cyan-300 flex items-center gap-2.5 group transition-all">
+                <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></div>
+                <div class="text-left font-mono">
+                    <div class="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors">lina.eth</div>
+                    <div class="text-[10px] text-slate-400">0x71C...9A4B [COPY]</div>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Toast Notification (No alert() used anywhere) -->
+    <div id="loot-toast" class="fixed top-20 right-6 z-50 pointer-events-none opacity-0 translate-y-[-10px] transition-all duration-300">
+        <div class="poly-card px-4 py-3 rounded-xl border-2 border-amber-400 shadow-[0_0_30px_rgba(250,204,21,0.3)] flex items-center gap-3 bg-slate-950/95">
+            <div id="toast-icon" class="text-2xl">✨</div>
+            <div>
+                <div id="toast-title" class="font-mono text-xs font-extrabold text-amber-300 uppercase tracking-wider">LOOT ACQUIRED</div>
+                <div id="toast-desc" class="font-mono text-xs text-slate-200">Address copied to clipboard!</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MAIN PORTFOLIO CONTENT (Scrollable Container over 3D Low-Poly World)
+         ===================================================================== -->
+    <main id="main-content" class="relative z-10 pt-24 pb-36 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-28">
+
+        <!-- =================================================================
+             00. HERO SECTION (SPAWN POINT)
+             ================================================================= -->
+        <section id="spawn" class="min-h-[82vh] flex flex-col justify-center relative">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <!-- Left Column: Hero Statement & Teleporter CTA -->
+                <div class="lg:col-span-7 space-y-6">
+                    <!-- Spawn Coordinates Badge -->
+                    <div class="inline-flex flex-wrap items-center gap-2 poly-card px-3.5 py-1.5 rounded-full border border-emerald-400/40">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span class="font-mono text-xs font-semibold text-emerald-300 tracking-wider uppercase">
+                            // SPAWN_POINT: SEED_884920 // OPEN FOR WEB3 & INDIE GAMING ROLES
+                        </span>
+                    </div>
+
+                    <!-- Live Specimen / Field Status Strip (inspired by lisatrotter.xyz) -->
+                    <div class="poly-card px-3.5 py-2 rounded-xl border border-slate-700/80 inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[11px] text-slate-300">
+                        <span class="text-cyan-300 font-bold flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                            survivor no. 001
+                        </span>
+                        <span class="text-slate-600">·</span>
+                        <span>local time <strong id="live-local-clock" class="text-white">00:00:00</strong></span>
+                        <span class="text-slate-600">·</span>
+                        <span>habitat: <span class="text-emerald-300">discord lobbies & block explorers</span></span>
+                        <span class="text-slate-600">·</span>
+                        <span>tabs open: <span class="text-amber-300">too many</span></span>
+                        <span class="text-slate-600">·</span>
+                        <span>seeds in progress: <span class="text-white font-bold">1</span></span>
+                    </div>
+
+                    <!-- Expressive Display Headline -->
+                    <div class="space-y-2">
+                        <p class="font-mono text-xs sm:text-sm uppercase tracking-[0.25em] text-cyan-300 font-bold">
+                            COMMUNITY & GROWTH ARCHITECT • ON-CHAIN SURVIVAL WORLDS
+                        </p>
+                        <h1 class="font-syne text-5xl sm:text-6xl xl:text-7xl font-extrabold tracking-tight leading-[0.96] text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.8)]">
+                            LINA <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-cyan-300 to-amber-300">BENNETT</span>
+                        </h1>
+                    </div>
+
+                    <!-- Authentic Gamer + Web3 Tagline -->
+                    <div class="poly-card p-5 sm:p-6 rounded-2xl border-l-4 border-l-cyan-400 max-w-2xl space-y-3">
+                        <p class="text-lg sm:text-xl text-slate-100 font-medium leading-relaxed">
+                            Spawning loyal player ecosystems on <span class="text-cyan-300 font-semibold underline decoration-cyan-400/40 underline-offset-4">floating islands of liquidity</span>. Scaling indie Web3 games from <span class="text-emerald-300 font-mono font-bold">0 to 100k+ survivors</span> without mercenary bot farms.
+                        </p>
+                        <p class="font-mono text-xs text-slate-300 leading-relaxed">
+                            Currently leading Community & Ecosystem Growth at <span class="text-amber-300 font-semibold">@AetherShards</span>. Obsessed with roguelike retention loops, *Muck*-style co-op chaos, soulbound guild progression, and turning lurkers into lore-writers.
+                        </p>
+                    </div>
+
+                    <!-- Mobile/Tablet Biome Switcher -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-mono text-[11px] text-slate-400 uppercase mr-1">SHIFT 3D BIOME:</span>
+                        <button onclick="setBiome(0)" class="px-3 py-1.5 rounded-lg poly-card text-xs font-mono text-emerald-300 border border-emerald-400/40 hover:bg-emerald-500/20">
+                            🌲 01. Muck Emerald Island
+                        </button>
+                        <button onclick="setBiome(1)" class="px-3 py-1.5 rounded-lg poly-card text-xs font-mono text-cyan-300 border border-cyan-400/40 hover:bg-cyan-500/20">
+                            💎 02. Glowing Rune Cavern
+                        </button>
+                        <button onclick="setBiome(2)" class="px-3 py-1.5 rounded-lg poly-card text-xs font-mono text-amber-300 border border-amber-400/40 hover:bg-amber-500/20">
+                            ⚡ 03. Petrichor Teleporter
+                        </button>
+                    </div>
+
+                    <!-- Interactive Risk of Rain 2 Teleporter CTA + Quick Actions -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+                        <!-- Teleporter Button -->
+                        <button id="teleporter-btn" onclick="chargeTeleporter()" class="poly-btn group relative overflow-hidden bg-gradient-to-r from-rose-600 via-amber-500 to-cyan-500 p-[2px] rounded-xl shadow-[0_0_30px_rgba(244,63,94,0.35)]">
+                            <div class="bg-slate-950/90 group-hover:bg-slate-950/70 transition-all px-6 py-4 rounded-[10px] relative overflow-hidden flex items-center justify-between gap-4">
+                                <!-- Teleporter Charge Fill Background -->
+                                <div id="teleporter-fill" class="absolute inset-y-0 left-0 bg-gradient-to-r from-rose-500/40 via-amber-500/40 to-cyan-400/40 transition-all duration-300" style="width: 0%;"></div>
+                                <div class="relative z-10 flex items-center gap-3">
+                                    <span class="text-xl animate-spin" style="animation-duration: 6s;">⛩️</span>
+                                    <div class="text-left">
+                                        <div id="teleporter-label" class="font-mono text-sm font-extrabold text-white tracking-wider uppercase">
+                                            ACTIVATE PRIMORDIAL TELEPORTER [E]
+                                        </div>
+                                        <div id="teleporter-sub" class="font-mono text-[10px] text-amber-300">
+                                            CHARGE: 0% // CLICK TO CHARGE & DROP BOSS LOOT
+                                        </div>
+                                    </div>
+                                </div>
+                                <span id="teleporter-pct" class="relative z-10 font-mono text-lg font-extrabold text-cyan-300">0%</span>
+                            </div>
+                        </button>
+
+                        <a href="#contact" class="poly-card px-6 py-4 rounded-xl border border-cyan-400/40 hover:border-cyan-300 hover:bg-cyan-500/15 font-mono text-xs font-bold text-cyan-200 flex items-center justify-center gap-2 transition-all">
+                            <span>📡 SUMMON FOR CO-OP</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Column: Live Survivor Telemetry Card & 3D World Controls -->
+                <div class="lg:col-span-5 flex flex-col items-end">
+                    <div class="poly-card p-5 rounded-2xl border border-cyan-400/30 w-full max-w-md space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-sm bg-cyan-400 rotate-45"></span>
+                                <span class="font-mono text-xs font-bold tracking-wider text-cyan-300 uppercase">
+                                    // ON-CHAIN & GUILD TELEMETRY
+                                </span>
+                            </div>
+                            <span class="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                VERIFIED PROOF-OF-PLAY
+                            </span>
+                        </div>
+
+                        <!-- 4 Key High-Signal KPIs -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div onclick="spawnCritAtElement(this, '+68.4K SURVIVORS!')" class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-emerald-400/50 cursor-pointer transition-all">
+                                <div class="font-mono text-[10px] text-slate-400 uppercase">ACTIVE SURVIVORS</div>
+                                <div class="font-mono text-2xl font-extrabold text-emerald-400 mt-0.5">68,400+</div>
+                                <div class="font-mono text-[10px] text-emerald-300/80 mt-1">▲ +410% Organic (0 Bots)</div>
+                            </div>
+                            <div onclick="spawnCritAtElement(this, '94.2% DIAMOND HANDS!')" class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-400/50 cursor-pointer transition-all">
+                                <div class="font-mono text-[10px] text-slate-400 uppercase">ISLAND NFT RETENTION</div>
+                                <div class="font-mono text-2xl font-extrabold text-cyan-300 mt-0.5">94.2%</div>
+                                <div class="font-mono text-[10px] text-cyan-300/80 mt-1">◆ <6% Listed on Secondary</div>
+                            </div>
+                            <div onclick="spawnCritAtElement(this, 'CRIT! $14.8M VOLUME')" class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-400/50 cursor-pointer transition-all">
+                                <div class="font-mono text-[10px] text-slate-400 uppercase">IN-GAME DEX VOLUME</div>
+                                <div class="font-mono text-2xl font-extrabold text-amber-300 mt-0.5">$14.8M</div>
+                                <div class="font-mono text-[10px] text-amber-300/80 mt-1">⚡ Player-Driven Crafting</div>
+                            </div>
+                            <div onclick="spawnCritAtElement(this, '+3.8x VIRAL K-FACTOR!')" class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-rose-400/50 cursor-pointer transition-all">
+                                <div class="font-mono text-[10px] text-slate-400 uppercase">CO-OP LOBBY K-FACTOR</div>
+                                <div class="font-mono text-2xl font-extrabold text-rose-400 mt-0.5">2.45x</div>
+                                <div class="font-mono text-[10px] text-rose-300/80 mt-1">🔥 Friend-Pass Loop</div>
+                            </div>
+                        </div>
+
+                        <!-- Interactive 3D Character Control Bar -->
+                        <div class="p-3 rounded-xl bg-slate-950/90 border border-slate-800 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-orange-500/20 border border-orange-400 flex items-center justify-center text-base">
+                                    ⚔️
+                                </div>
+                                <div class="font-mono text-[11px]">
+                                    <div class="text-white font-bold">3D AVATAR: RUNE KNIGHT LINA</div>
+                                    <div class="text-slate-400 text-[10px]">Equipped: Bifurcated Magma Blade</div>
+                                </div>
+                            </div>
+                            <button onclick="triggerManualSlash()" class="px-3 py-1.5 rounded-lg bg-orange-500/20 hover:bg-orange-500 border border-orange-400 text-orange-300 hover:text-slate-950 font-mono text-xs font-bold transition-all">
+                                SLASH [CLICK]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================================
+             01. ABOUT & RISK OF RAIN 2 ITEM LOADOUT (SURVIVOR LORE & INVENTORY)
+             ================================================================= -->
+        <section id="about" class="space-y-8 scroll-mt-24">
+            <!-- Section Header -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800/80 pb-4">
+                <div>
+                    <div class="font-mono text-xs text-cyan-400 uppercase tracking-widest mb-1">
+                        // 01. SURVIVOR_LORE & PASSIVE_LOADOUT
+                    </div>
+                    <h2 class="font-syne text-3xl sm:text-4xl font-extrabold text-white">
+                        WHY MY COMMUNITIES SURVIVE <span class="text-emerald-400">STAGE 20+</span>
+                    </h2>
+                </div>
+                <div class="font-mono text-xs text-slate-400">
+                    CLASS: <span class="text-amber-300 font-bold">FULL-STACK COMMUNITY & GROWTH ARCHITECT</span>
+                </div>
+            </div>
+
+            <!-- Lore + Interactive RoR2 Inventory Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Survivor Lore Column (5 cols) -->
+                <div class="lg:col-span-5 space-y-5">
+                    <div class="poly-card p-6 rounded-2xl space-y-4 border-t-2 border-t-emerald-400">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono text-xs font-bold text-emerald-300 uppercase">📜 LOGBOOK ENTRY: LINA_BENNETT</span>
+                            <span class="font-mono text-[10px] text-slate-400">UNLOCKED: 2019 -> 2026</span>
+                        </div>
+                        <p class="text-slate-200 text-sm sm:text-base leading-relaxed">
+                            Most Web3 game launches die right after TGE because they recruit <strong class="text-rose-400">mercenary airdrop farmers</strong> instead of actual gamers. When the token dips 15%, the Discord turns into a ghost town.
+                        </p>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            I came up through the trenches of indie survival & roguelike communities—hosting 100-player <span class="text-emerald-300 font-semibold">Muck</span> island challenges, modding <span class="text-cyan-300 font-semibold">Risk of Rain 2</span> co-op lobbies, and running late-night raid guilds.
+                        </p>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            In Web3, I treat community growth like **roguelike item stacking**: combine frictionless onboarding with high-stakes co-op quests, ARG lore puzzles, and soulbound reputation runes so every player brings three friends into the lobby.
+                        </p>
+
+                        <!-- Character Base Stats -->
+                        <div class="pt-3 border-t border-slate-800/80 space-y-2 font-mono text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">BASE D30 RETENTION:</span>
+                                <span class="text-emerald-300 font-bold">64.8% (+8.2% per Season)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">SYBIL / BOT RESISTANCE:</span>
+                                <span class="text-cyan-300 font-bold">99.4% (Proof-of-Play Gated)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">FAVORITE BIOME:</span>
+                                <span class="text-amber-300 font-bold">Sundered Grove & Muck Seed #420</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Item Detailed Inspector Box (RoR2 Logbook Style) -->
+                    <div id="item-inspector" class="poly-card p-6 rounded-2xl border-2 border-amber-400/70 bg-slate-950/90 space-y-4">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Risk of Rain 2 Interactive Item Loadout Grid (7 cols) -->
+                <div class="lg:col-span-7 poly-card p-6 rounded-2xl space-y-5">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-mono text-sm font-bold text-white uppercase flex items-center gap-2">
+                                <span>🎒 EQUIPPED GROWTH ITEMS (CLICK TO INSPECT & STACK)</span>
+                            </h3>
+                            <p class="font-mono text-[11px] text-slate-400">
+                                Click any item to view its Web3 growth formula or stack multiple copies!
+                            </p>
+                        </div>
+                        <button onclick="stackAllItems()" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-400 text-cyan-300 hover:text-slate-950 border border-cyan-400/50 font-mono text-xs font-bold transition-all">
+                            +1 STACK ALL ITEMS
+                        </button>
+                    </div>
+
+                    <!-- Rarity Filter Tabs -->
+                    <div class="flex flex-wrap gap-1.5 font-mono text-[11px]">
+                        <button onclick="filterItems('all')" class="item-filter-btn px-2.5 py-1 rounded bg-slate-800 text-white border border-cyan-400">ALL (10)</button>
+                        <button onclick="filterItems('boss')" class="item-filter-btn px-2.5 py-1 rounded bg-slate-900 text-amber-300 border border-amber-500/30">BOSS / ON-CHAIN</button>
+                        <button onclick="filterItems('legendary')" class="item-filter-btn px-2.5 py-1 rounded bg-slate-900 text-rose-400 border border-rose-500/30">LEGENDARY</button>
+                        <button onclick="filterItems('uncommon')" class="item-filter-btn px-2.5 py-1 rounded bg-slate-900 text-emerald-400 border border-emerald-500/30">UNCOMMON</button>
+                        <button onclick="filterItems('common')" class="item-filter-btn px-2.5 py-1 rounded bg-slate-900 text-slate-300 border border-slate-600/30">COMMON</button>
+                    </div>
+
+                    <!-- 10-Item Grid -->
+                    <div id="item-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <!-- Rendered dynamically via JS -->
+                    </div>
+
+                    <!-- Total Synergized Buff Summary -->
+                    <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+                        <span class="text-slate-400">TOTAL ITEM STACK SYNERGY:</span>
+                        <span id="total-stack-bonus" class="text-emerald-300 font-bold">
+                            +315% Organic Referral Velocity // -68% Paid CAC
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             02. EXPERIENCE (RUN HISTORY & BIOME STAGES)
+             ================================================================= -->
+        <section id="experience" class="space-y-8 scroll-mt-24">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800/80 pb-4">
+                <div>
+                    <div class="font-mono text-xs text-emerald-400 uppercase tracking-widest mb-1">
+                        // 02. RUN_HISTORY & COMPLETED_STAGES
+                    </div>
+                    <h2 class="font-syne text-3xl sm:text-4xl font-extrabold text-white">
+                        PROVEN <span class="text-cyan-300">ROGUELIKE RUN LOGS</span>
+                    </h2>
+                </div>
+                <div class="font-mono text-xs text-slate-400">
+                    TOTAL CAREER SURVIVAL TIME: <span class="text-emerald-300 font-bold">6+ YEARS IN GAMING & WEB3</span>
+                </div>
+            </div>
+
+            <!-- Run Stages List -->
+            <div id="run-logs-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Populated via JS with expandable Telemetry Logs -->
+            </div>
+        </section>
+
+        <!-- =================================================================
+             03. COMMUNITY (GUILD ARCHITECTURE & SHRINE OF THE WOODS SIMULATOR)
+             ================================================================= -->
+        <section id="community" class="space-y-8 scroll-mt-24">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800/80 pb-4">
+                <div>
+                    <div class="font-mono text-xs text-amber-400 uppercase tracking-widest mb-1">
+                        // 03. GUILD_ARCHITECTURE & SHRINE_SIMULATOR
+                    </div>
+                    <h2 class="font-syne text-3xl sm:text-4xl font-extrabold text-white">
+                        SHRINE OF THE <span class="text-amber-300">LIVING ECOSYSTEM</span>
+                    </h2>
+                </div>
+                <p class="font-mono text-xs text-slate-300 max-w-md">
+                    Activate a Muck/RoR2 Shrine below to inspect how I turn silent token holders into co-op raiders, lore hunters, and governance elders.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                <!-- Left: 3 Shrine Pillars Selector + Offer Gold Trigger (5 cols) -->
+                <div class="lg:col-span-5 flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <button onclick="selectShrine(0)" id="shrine-tab-0" class="shrine-tab w-full text-left poly-card p-4 rounded-xl border-2 border-cyan-400 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="font-mono text-xs font-extrabold text-cyan-300 uppercase">ᛉ SHRINE 01 // ARG LORE & RUNE QUESTS</span>
+                                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[10px]">ACTIVE</span>
+                            </div>
+                            <p class="text-xs text-slate-300 mt-1.5">
+                                Cryptic cave runes hidden in patch notes & 3D worlds that require guild-wide co-op deciphering to unlock soulbound loot.
+                            </p>
+                        </button>
+
+                        <button onclick="selectShrine(1)" id="shrine-tab-1" class="shrine-tab w-full text-left poly-card p-4 rounded-xl border border-slate-700/80 hover:border-emerald-400/60 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="font-mono text-xs font-extrabold text-emerald-300 uppercase">⚔️ SHRINE 02 // CREATOR RAID PARTIES</span>
+                                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px]">INSPECT</span>
+                            </div>
+                            <p class="text-xs text-slate-300 mt-1.5">
+                                Micro-streamer bounties & Twitch/X clip squads celebrating hilarious co-op deaths, boss speedruns, and organic memes.
+                            </p>
+                        </button>
+
+                        <button onclick="selectShrine(2)" id="shrine-tab-2" class="shrine-tab w-full text-left poly-card p-4 rounded-xl border border-slate-700/80 hover:border-amber-400/60 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="font-mono text-xs font-extrabold text-amber-300 uppercase">👑 SHRINE 03 // SOULBOUND ELDER DAO</span>
+                                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px]">INSPECT</span>
+                            </div>
+                            <p class="text-xs text-slate-300 mt-1.5">
+                                Reputation-weighted governance where actual playtime & raid leadership—not just whale wallets—decide next biome updates.
+                            </p>
+                        </button>
+                    </div>
+
+                    <!-- Interactive Shrine Offering Button -->
+                    <div class="poly-card p-5 rounded-2xl border border-amber-400/40 bg-gradient-to-br from-amber-500/10 to-slate-950 space-y-3">
+                        <div class="flex items-center justify-between font-mono text-xs">
+                            <span class="text-amber-300 font-bold">⛩️ SHRINE OF CHANCE // LIVE RAID TEST</span>
+                            <span id="shrine-count" class="text-slate-400">OFFERINGS: 3</span>
+                        </div>
+                        <p class="font-mono text-[11px] text-slate-300">
+                            Simulate an on-chain community quest drop in the live guild terminal on the right:
+                        </p>
+                        <button onclick="triggerShrineEvent()" class="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-mono text-xs font-extrabold tracking-wider uppercase shadow-[0_0_20px_rgba(250,204,21,0.4)] transition-all">
+                            ⚡ OFFER 25 RUNE GOLD (SPAWN COMMUNITY RAID)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Live Simulated Guild Feed & Progression Ladder (7 cols) -->
+                <div class="lg:col-span-7 poly-card p-6 rounded-2xl flex flex-col justify-between space-y-5">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                        <div>
+                            <h3 id="shrine-title" class="font-mono text-sm font-extrabold text-cyan-300 uppercase">
+                                // LIVE GUILD TERMINAL: ARG LORE & RUNE QUESTS
+                            </h3>
+                            <p id="shrine-subtitle" class="font-mono text-[11px] text-slate-400">
+                                Zero "wen token" spam • 92% high-effort gameplay & lore discussion
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2 font-mono text-xs">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            <span id="shrine-online-count" class="text-emerald-300 font-bold">4,812 IN VOICE / RAID</span>
+                        </div>
+                    </div>
+
+                    <!-- Guild Progression Tiers -->
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <div class="font-mono text-[10px] text-slate-400">TIER 1 // ONBOARD</div>
+                            <div class="font-mono text-xs font-bold text-white mt-0.5">🌱 Fresh Spawn</div>
+                            <div class="font-mono text-[10px] text-emerald-400 mt-1">Instant Co-op Matchmaking</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-cyan-500/40">
+                            <div class="font-mono text-[10px] text-cyan-300">TIER 2 // CORE</div>
+                            <div class="font-mono text-xs font-bold text-white mt-0.5">ᛉ Rune Bearer</div>
+                            <div class="font-mono text-[10px] text-cyan-300 mt-1">SBT Badge + Playtest Keys</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-amber-500/40">
+                            <div class="font-mono text-[10px] text-amber-300">TIER 3 // LEADER</div>
+                            <div class="font-mono text-xs font-bold text-white mt-0.5">👑 Island Elder</div>
+                            <div class="font-mono text-[10px] text-amber-300 mt-1">Treasury & Raid Bounties</div>
+                        </div>
+                    </div>
+
+                    <!-- Simulated Live Discord / X Raid Feed -->
+                    <div id="shrine-feed" class="space-y-2.5 max-h-64 overflow-y-auto pr-1 font-mono text-xs">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             04. GROWTH (ON-CHAIN TELEMETRY & ARTIFACT RETENTION SANDBOX)
+             ================================================================= -->
+        <section id="growth" class="space-y-8 scroll-mt-24">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800/80 pb-4">
+                <div>
+                    <div class="font-mono text-xs text-rose-400 uppercase tracking-widest mb-1">
+                        // 04. ON-CHAIN_TELEMETRY & RETENTION_SANDBOX
+                    </div>
+                    <h2 class="font-syne text-3xl sm:text-4xl font-extrabold text-white">
+                        MERCENARY HYPE VS. <span class="text-emerald-400">ROGUELIKE LOOPS</span>
+                    </h2>
+                </div>
+                <div class="font-mono text-xs text-slate-400">
+                    TOGGLE <span class="text-cyan-300 font-bold">ARTIFACTS OF GROWTH</span> TO SIMULATE CAMPAIGN KPIs
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <!-- Left: Interactive RoR2 Artifacts of Growth Mutators (5 cols) -->
+                <div class="lg:col-span-5 poly-card p-6 rounded-2xl space-y-5">
+                    <div>
+                        <h3 class="font-mono text-sm font-bold text-white uppercase">
+                            💠 ACTIVATE ARTIFACT MUTATORS
+                        </h3>
+                        <p class="font-mono text-[11px] text-slate-400 mt-0.5">
+                            In *Risk of Rain 2*, Artifacts bend the rules of the world. Toggle my growth loops to see their impact on D90 player retention:
+                        </p>
+                    </div>
+
+                    <!-- 4 Toggles -->
+                    <div class="space-y-2.5">
+                        <label class="flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-cyan-500/40 cursor-pointer hover:border-cyan-300 transition-all">
+                            <div class="pr-3">
+                                <div class="font-mono text-xs font-bold text-cyan-300">◆ Artifact of Swarms (Co-op Friend Pass)</div>
+                                <div class="font-mono text-[10px] text-slate-400">Every survivor gets 2 guest passes that drop shared loot when friends reach Stage 3.</div>
+                            </div>
+                            <input type="checkbox" checked onchange="updateGrowthSimulation()" id="art-swarms" class="w-5 h-5 accent-cyan-400 rounded cursor-pointer">
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-emerald-500/40 cursor-pointer hover:border-emerald-300 transition-all">
+                            <div class="pr-3">
+                                <div class="font-mono text-xs font-bold text-emerald-300">◆ Artifact of Command (Creator Bounty Board)</div>
+                                <div class="font-mono text-[10px] text-slate-400">Automated on-chain rewards for micro-streamers & TikTok/Shorts survival clips.</div>
+                            </div>
+                            <input type="checkbox" checked onchange="updateGrowthSimulation()" id="art-command" class="w-5 h-5 accent-emerald-400 rounded cursor-pointer">
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-amber-500/40 cursor-pointer hover:border-amber-300 transition-all">
+                            <div class="pr-3">
+                                <div class="font-mono text-xs font-bold text-amber-300">◆ Artifact of Kin (Cross-Guild Island Wars)</div>
+                                <div class="font-mono text-[10px] text-slate-400">Weekly tournament ladders across 20+ partner Web3 gaming guilds.</div>
+                            </div>
+                            <input type="checkbox" checked onchange="updateGrowthSimulation()" id="art-kin" class="w-5 h-5 accent-amber-400 rounded cursor-pointer">
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-purple-500/40 cursor-pointer hover:border-purple-300 transition-all">
+                            <div class="pr-3">
+                                <div class="font-mono text-xs font-bold text-purple-300">◆ Artifact of Sacrifice (Proof-of-Play Mint)</div>
+                                <div class="font-mono text-[10px] text-slate-400">Replaces whitelist grinding with in-game boss kills to mint tradable runes.</div>
+                            </div>
+                            <input type="checkbox" onchange="updateGrowthSimulation()" id="art-sacrifice" class="w-5 h-5 accent-purple-400 rounded cursor-pointer">
+                        </label>
+                    </div>
+
+                    <!-- Seed Cohort Slider -->
+                    <div class="pt-2 space-y-1.5">
+                        <div class="flex justify-between font-mono text-xs">
+                            <span class="text-slate-300">INITIAL SEED SURVIVORS:</span>
+                            <span id="seed-val-label" class="text-cyan-300 font-bold">5,000 Players</span>
+                        </div>
+                        <input id="seed-slider" type="range" min="1000" max="15000" step="500" value="5000" oninput="updateGrowthSimulation()" class="w-full accent-cyan-400 cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Right: Interactive Retention Curve Visualizer & Projected Telemetry (7 cols) -->
+                <div class="lg:col-span-7 poly-card p-6 rounded-2xl space-y-5">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-mono text-sm font-bold text-white uppercase">
+                                📈 90-DAY COHORT SURVIVAL TRAJECTORY
+                            </h3>
+                            <p class="font-mono text-[11px] text-slate-400">
+                                Comparing standard Web3 paid quest farms vs. Lina's compounding co-op loops
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-4 font-mono text-[11px]">
+                            <span class="flex items-center gap-1.5 text-emerald-300">
+                                <span class="w-3 h-1 bg-emerald-400 inline-block"></span> LINA'S ROGUELIKE LOOP
+                            </span>
+                            <span class="flex items-center gap-1.5 text-rose-400">
+                                <span class="w-3 h-1 bg-rose-500 inline-block"></span> MERCENARY AIRDROP FARM
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic SVG Chart -->
+                    <div class="w-full bg-slate-950/90 rounded-xl border border-slate-800 p-4">
+                        <svg id="growth-chart" viewBox="0 0 600 220" class="w-full h-48 sm:h-56 overflow-visible">
+                            <!-- Grid lines -->
+                            <line x1="40" y1="20" x2="580" y2="20" stroke="#1e293b" stroke-dasharray="4"/>
+                            <line x1="40" y1="80" x2="580" y2="80" stroke="#1e293b" stroke-dasharray="4"/>
+                            <line x1="40" y1="140" x2="580" y2="140" stroke="#1e293b" stroke-dasharray="4"/>
+                            <line x1="40" y1="195" x2="580" y2="195" stroke="#334155"/>
+
+                            <!-- Y-axis labels -->
+                            <text x="5" y="24" fill="#64748b" font-family="JetBrains Mono" font-size="10">100k</text>
+                            <text x="5" y="84" fill="#64748b" font-family="JetBrains Mono" font-size="10">50k</text>
+                            <text x="5" y="144" fill="#64748b" font-family="JetBrains Mono" font-size="10">25k</text>
+                            <text x="5" y="195" fill="#64748b" font-family="JetBrains Mono" font-size="10">0</text>
+
+                            <!-- X-axis labels -->
+                            <text x="40" y="214" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">DAY 1 (SPAWN)</text>
+                            <text x="210" y="214" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">DAY 30 (TGE)</text>
+                            <text x="390" y="214" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">DAY 60 (SEASON 2)</text>
+                            <text x="520" y="214" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">DAY 90</text>
+
+                            <!-- Mercenary Airdrop Curve (Spike then 95% crash) -->
+                            <path id="mercenary-path" d="M 40 160 Q 140 20, 210 45 L 250 182 L 580 190" fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="6 4"/>
+                            
+                            <!-- Lina's Organic Roguelike Curve (Compounding Growth) -->
+                            <path id="organic-area" d="M 40 170 C 180 140, 320 80, 580 28 L 580 195 L 40 195 Z" fill="url(#emeraldGrad)" opacity="0.25"/>
+                            <path id="organic-path" d="M 40 170 C 180 140, 320 80, 580 28" fill="none" stroke="#4ade80" stroke-width="3.5"/>
+
+                            <defs>
+                                <linearGradient id="emeraldGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#4ade80"/>
+                                    <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+
+                    <!-- Calculated Output Metrics -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono">
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <div class="text-[10px] text-slate-400">PROJECTED D90 DAU</div>
+                            <div id="sim-dau" class="text-lg font-extrabold text-emerald-400 mt-0.5">64,200</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <div class="text-[10px] text-slate-400">D30 RETENTION</div>
+                            <div id="sim-ret" class="text-lg font-extrabold text-cyan-300 mt-0.5">68.5%</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <div class="text-[10px] text-slate-400">VIRAL K-FACTOR</div>
+                            <div id="sim-k" class="text-lg font-extrabold text-amber-300 mt-0.5">2.35x</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <div class="text-[10px] text-slate-400">ORGANIC CAC</div>
+                            <div id="sim-cac" class="text-lg font-extrabold text-purple-300 mt-0.5">$0.42</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             05. CONTACT (EDGE OF THE ISLAND // LISATROTTER.XYZ INDIE SPIRIT)
+             ================================================================= -->
+        <section id="contact" class="space-y-6 scroll-mt-24 pt-6">
+            <div class="poly-card p-6 sm:p-10 rounded-3xl border-2 border-cyan-400/50 relative overflow-hidden">
+                <!-- Ambient Decorative Corner Rune -->
+                <div class="absolute -right-8 -bottom-10 font-mono text-[170px] text-cyan-500/5 pointer-events-none select-none">
+                    ᛉ
+                </div>
+
+                <div class="relative z-10 space-y-8">
+                    <!-- Top Altitude & Field Status Bar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 font-mono text-[11px] text-slate-400 border-b border-slate-800/90 pb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-cyan-300 font-bold">// 05 / ALTITUDE 0m</span>
+                            <span>·</span>
+                            <span>YOU REACHED THE EDGE OF THE FLOATING ISLAND</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-emerald-300 font-semibold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            <span>LOBBY OPEN FOR CO-OP & GROWTH ROLES</span>
+                        </div>
+                    </div>
+
+                    <!-- Direct, Human Intro (No Corporate Lead Form) -->
+                    <div class="max-w-2xl space-y-3">
+                        <h2 class="font-syne text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-none">
+                            building a strange new world? <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-emerald-300 to-amber-300">tell me.</span>
+                        </h2>
+                        <p class="font-mono text-xs sm:text-sm text-slate-300 leading-relaxed">
+                            No corporate contact forms or automated CRM funnels here. If you're launching an indie Web3 game, testing a survival roguelike loop, or want to raid a Muck seed together — reach out directly:
+                        </p>
+                    </div>
+
+                    <!-- 4 Direct Comms Cards in a Row (Telegram, X/Twitter, Discord, ENS) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 font-mono">
+                        <!-- 1. Telegram -->
+                        <a href="https://t.me/linabennett" target="_blank" rel="noopener noreferrer"
+                           onclick="playSfx('item')"
+                           class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 hover:border-cyan-400 flex items-center justify-between group transition-all">
+                            <div>
+                                <div class="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                                    telegram (fastest)
+                                </div>
+                                <div class="text-sm font-extrabold text-white group-hover:text-cyan-300 mt-1 transition-colors">
+                                    @linabennett
+                                </div>
+                            </div>
+                            <span class="text-slate-500 group-hover:text-cyan-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-base">↗</span>
+                        </a>
+
+                        <!-- 2. X / Twitter (Kept as requested) -->
+                        <a href="https://x.com/lina_eth" target="_blank" rel="noopener noreferrer"
+                           onclick="playSfx('item')"
+                           class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 hover:border-cyan-400 flex items-center justify-between group transition-all">
+                            <div>
+                                <div class="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span class="text-slate-400">𝕏</span>
+                                    twitter / x
+                                </div>
+                                <div class="text-sm font-extrabold text-white group-hover:text-cyan-300 mt-1 transition-colors">
+                                    @lina_eth
+                                </div>
+                            </div>
+                            <span class="text-slate-500 group-hover:text-cyan-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-base">↗</span>
+                        </a>
+
+                        <!-- 3. Discord Handle Copy -->
+                        <button type="button" onclick="copyDiscord()"
+                           class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 hover:border-emerald-400 flex items-center justify-between group transition-all text-left">
+                            <div>
+                                <div class="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span>👾</span>
+                                    discord lobby
+                                </div>
+                                <div class="text-sm font-extrabold text-white group-hover:text-emerald-300 mt-1 transition-colors">
+                                    lina.gg
+                                </div>
+                            </div>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-400 group-hover:border-emerald-400/50 group-hover:text-emerald-300 transition-colors">
+                                copy
+                            </span>
+                        </button>
+
+                        <!-- 4. On-Chain ENS / Wallet Copy -->
+                        <button type="button" onclick="copyWallet()"
+                           class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 hover:border-amber-400 flex items-center justify-between group transition-all text-left">
+                            <div>
+                                <div class="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span>💎</span>
+                                    onchain / ens
+                                </div>
+                                <div class="text-sm font-extrabold text-white group-hover:text-amber-300 mt-1 transition-colors">
+                                    lina.eth
+                                </div>
+                            </div>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-400 group-hover:border-amber-400/50 group-hover:text-amber-300 transition-colors">
+                                0x71C...
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- Campfire Guestbook (localStorage) + Live Sword Crits Counter -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6 border-t border-slate-800/90 items-start">
+                        
+                        <!-- Left (7 cols): Local Campfire Logbook -->
+                        <div class="lg:col-span-7 bg-slate-950/80 p-5 rounded-2xl border border-slate-800/90 space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <div class="font-mono text-xs font-extrabold text-amber-300 uppercase flex items-center gap-2">
+                                    <span>🔥 campfire logbook</span>
+                                    <span class="text-[10px] text-slate-400 font-normal normal-case">
+                                        — a guestbook only you can read. stays in this browser, on this device.
+                                    </span>
+                                </div>
+                                <button type="button" onclick="clearCampfireLogs()" class="font-mono text-[10px] text-slate-500 hover:text-rose-400 transition-colors">
+                                    [clear ashes]
+                                </button>
+                            </div>
+
+                            <form onsubmit="signCampfireLog(event)" class="flex flex-col sm:flex-row gap-2">
+                                <input type="text" id="campfire-input" maxlength="110" required
+                                       placeholder="carve a rune note, seed number, or thought for your next run..."
+                                       class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 focus:border-amber-400 focus:outline-none font-mono text-xs text-white placeholder:text-slate-500">
+                                <button type="submit"
+                                        class="poly-btn px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-mono text-xs font-extrabold uppercase tracking-wider transition-all shrink-0">
+                                    carve ᛉ
+                                </button>
+                            </form>
+
+                            <!-- Saved Browser Notes List -->
+                            <div id="campfire-notes" class="space-y-1.5 pt-1 max-h-36 overflow-y-auto pr-1 font-mono text-xs">
+                                <!-- Rendered via JS from localStorage -->
+                            </div>
+                        </div>
+
+                        <!-- Right (5 cols): Retro Crits Counter & Colophon -->
+                        <div class="lg:col-span-5 flex flex-col justify-between space-y-4 bg-slate-950/80 p-5 rounded-2xl border border-slate-800/90">
+                            <!-- Retro 6-Digit Counter (inspired by lisatrotter.xyz bubble counter) -->
+                            <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+                                <div>
+                                    <div class="font-mono text-[10px] text-slate-400 uppercase">sword crits you dealt</div>
+                                    <div class="font-mono text-[11px] text-emerald-300 mt-0.5">click island or cards to farm</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span id="crit-counter" class="font-mono text-xl font-extrabold text-cyan-300 tracking-widest bg-slate-950 px-3 py-1.5 rounded-lg border border-cyan-500/30 shadow-inner">
+                                        000012
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Colophon -->
+                            <div class="font-mono text-[11px] text-slate-400 leading-relaxed space-y-1">
+                                <div class="text-slate-200 font-bold uppercase text-[10px] tracking-wider">// colophon & craft</div>
+                                <p>
+                                    built by hand as a single-file low-poly world with three.js & web audio synth · no cookies, no analytics trackers, no corporate templates · typeset in chakra petch, syne & jetbrains mono.
+                                </p>
+                            </div>
+
+                            <!-- 88x31-style Indie Micro-Badges -->
+                            <div class="flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
+                                <span class="px-2 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300">no cookies</span>
+                                <span class="px-2 py-1 rounded bg-slate-900 border border-slate-700 text-emerald-300">three.js by hand</span>
+                                <span class="px-2 py-1 rounded bg-slate-900 border border-slate-700 text-cyan-300">muck seed #884920</span>
+                                <button type="button" onclick="toggleSecretsModal()" class="px-2 py-1 rounded bg-amber-500/15 border border-amber-400/50 text-amber-300 hover:bg-amber-400 hover:text-slate-950 font-bold transition-colors">
+                                    press ? for secrets
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- =====================================================================
+         SECRETS & KEYBOARD SHORTCUTS MODAL (Triggered by pressing '?')
+         ===================================================================== -->
+    <div id="secrets-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="poly-card max-w-md w-full p-6 rounded-3xl border-2 border-cyan-400 shadow-[0_0_50px_rgba(34,211,238,0.25)] space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="font-mono text-xs font-extrabold text-cyan-300 uppercase tracking-wider">
+                    ᛉ WORLD SECRETS & HOTKEYS
+                </div>
+                <button onclick="toggleSecretsModal()" class="font-mono text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-900 border border-slate-700">
+                    [ESC]
+                </button>
+            </div>
+            <div class="space-y-2 font-mono text-xs">
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border border-slate-800">
+                    <span class="text-slate-300">Swing Bifurcated Magma Blade</span>
+                    <kbd class="px-2 py-0.5 rounded bg-slate-950 border border-cyan-400/50 text-cyan-300 font-bold">SPACE / CLICK</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border border-slate-800">
+                    <span class="text-slate-300">Charge Primordial Teleporter</span>
+                    <kbd class="px-2 py-0.5 rounded bg-slate-950 border border-amber-400/50 text-amber-300 font-bold">E</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border border-slate-800">
+                    <span class="text-slate-300">Shift 3D Island Biome</span>
+                    <kbd class="px-2 py-0.5 rounded bg-slate-950 border border-emerald-400/50 text-emerald-300 font-bold">1 / 2 / 3</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border border-slate-800">
+                    <span class="text-slate-300">Toggle 3D Free-Look (Hide HUD)</span>
+                    <kbd class="px-2 py-0.5 rounded bg-slate-950 border border-purple-400/50 text-purple-300 font-bold">V</kbd>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border border-slate-800">
+                    <span class="text-slate-300">Toggle Retro Synth Audio</span>
+                    <kbd class="px-2 py-0.5 rounded bg-slate-950 border border-slate-600 text-slate-200 font-bold">M</kbd>
+                </div>
+            </div>
+            <p class="font-mono text-[11px] text-slate-400 leading-relaxed pt-1">
+                💡 <strong class="text-slate-200">Pro tip:</strong> Drag anywhere on the sky or island to rotate the low-poly world 360°, or stack all 10 Risk of Rain 2 items in section 01 to max out referral velocity.
+            </p>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         BOSS LOOT DROP MODAL (Triggered when Teleporter reaches 100%)
+         ===================================================================== -->
+    <div id="boss-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="poly-card max-w-lg w-full p-6 sm:p-8 rounded-3xl border-2 border-amber-400 shadow-[0_0_60px_rgba(250,204,21,0.35)] space-y-5 text-center relative">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-3xl animate-bounce">
+                👑
+            </div>
+            <div class="font-mono text-xs font-extrabold text-amber-300 tracking-widest uppercase">
+                // TELEPORTER CHARGED 100% // BOSS DEFEATED
+            </div>
+            <h3 class="font-syne text-2xl sm:text-3xl font-extrabold text-white">
+                SHARD OF ORGANIC LIQUIDITY
+            </h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+                You've unlocked Lina's <span class="text-amber-300 font-semibold">Stage 99 Playbook Buff</span>! All HUD stats are now supercharged, and you've unlocked her direct 30-Day Web3 Game Launch Checklist.
+            </p>
+            <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-left font-mono text-xs space-y-1.5 text-slate-200">
+                <div class="text-cyan-300 font-bold">⚡ BOSS ITEM PASSIVE EFFECT:</div>
+                <div>• +100% First-Week Playtest Squad Retention</div>
+                <div>• Immune to mercenary Discord bot raids</div>
+                <div>• Converts every 10 active raiders into 1 creator evangelist</div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button onclick="closeBossModal('#about')" class="flex-1 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-mono text-xs font-extrabold uppercase">
+                    EQUIP BUFF & INSPECT LOADOUT
+                </button>
+                <button onclick="closeBossModal()" class="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs font-bold uppercase">
+                    CLOSE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         JAVASCRIPT: THREE.JS LOW-POLY WORLD, COMBAT FX, AUDIO SYNTH & DATA
+         ===================================================================== -->
+    <script>
+        /* =====================================================================
+           1. PROCEDURAL WEB AUDIO API SYNTH (Low-Poly Retro Game SFX)
+           ===================================================================== */
+        let audioCtx = null;
+        let sfxEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSfx(type) {
+            if (!sfxEnabled) return;
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'slash') {
+                    // Crisp Muck sword slash + crit ping
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(140, now + 0.11);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'item') {
+                    // RoR2 Item pickup arpeggio chime
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, now); // D5
+                    osc.frequency.setValueAtTime(880, now + 0.06); // A5
+                    gain.gain.setValueAtTime(0.07, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                } else if (type === 'teleporter') {
+                    // Rising teleporter harmonic hum
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220 + teleporterCharge * 4, now);
+                    osc.frequency.exponentialRampToValueAtTime(440 + teleporterCharge * 6, now + 0.18);
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'shrine') {
+                    // Deep Muck rune shrine activation chord
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(330, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08);
+                    gain.gain.setValueAtTime(0.09, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                }
+            } catch (e) {
+                // Ignore audio errors if blocked by browser autoplay policy
+            }
+        }
+
+        function toggleAudio() {
+            sfxEnabled = !sfxEnabled;
+            document.getElementById('sfx-icon').textContent = sfxEnabled ? '🔊' : '🔇';
+            showToast(sfxEnabled ? '🔊 SYNTH SFX ENABLED' : '🔇 SYNTH SFX MUTED', sfxEnabled ? 'Procedural game audio active.' : 'Audio muted.');
+        }
+
+        /* =====================================================================
+           2. RISK OF RAIN 2 ITEM LOADOUT DATA & RENDERING
+           ===================================================================== */
+        const loadoutItems = [
+            {
+                id: 'magma-blade',
+                name: 'Bifurcated Magma Greatsword',
+                rarity: 'boss',
+                rarityLabel: 'BOSS // ON-CHAIN',
+                stacks: 1,
+                icon: `<svg viewBox="0 0 48 48" class="w-10 h-10"><polygon points="8,40 14,34 38,6 42,10 18,38" fill="#ff6b35"/><polygon points="14,30 34,6 30,4 10,26" fill="#facc15"/><rect x="6" y="36" width="8" height="6" transform="rotate(-45 6 36)" fill="#64748b"/></svg>`,
+                shortStat: '+85% Narrative Ignition',
+                formula: (s) => `+${85 + (s - 1) * 45}% Launch Day Velocity & +${s * 2}x Lore Engagement`,
+                desc: 'Forged in crystal caverns (inspired by Muck & RoR2). Cuts through noisy crypto feeds with unmistakable visual identity, interactive lore quests, and founder-led storytelling.'
+            },
+            {
+                id: 'algiz-rune',
+                name: 'Glowing Algiz Rune Tablet',
+                rarity: 'legendary',
+                rarityLabel: 'LEGENDARY',
+                stacks: 2,
+                icon: `<svg viewBox="0 0 48 48" class="w-10 h-10"><polygon points="14,6 34,6 38,42 10,42" fill="#334155" stroke="#475569" stroke-width="2"/><path d="M24 12 L24 36 M24 22 L16 14 M24 22 L32 14" stroke="#22d3ee" stroke-width="3.5" stroke-linecap="round"/></svg>`,
+                shortStat: 'Soulbound Guild Ranks',
+                formula: (s) => `+${40 * s}% Elder Retention & ${Math.min(99.9, 92 + s * 2).toFixed(1)}% Governance Participation`,
+                desc: 'On-chain soulbound progression system (`Fresh Spawn` → `Rune Bearer` → `Island Elder`). Rewards real co-op playtime and community mentorship instead of mercenary token farming.'
+            },
+            {
+                id: 'ukulele-viral',
+                name: 'Ukulele of Viral Loops',
+                rarity: 'uncommon',
+                rarityLabel: 'UNCOMMON',
+                stacks: 3,
+                icon: `<svg viewBox="0 0 48 48" class="w-10 h-10"><ellipse cx="18" cy="30" rx="10" ry="8" transform="rotate(-35 18 30)" fill="#4ade80"/><rect x="24" y="10" width="5" height="18" transform="rotate(35 24 10)" fill="#a3e635"/><path d="M10 14 L22 8 L18 22 L30 16" stroke="#22d3ee" stroke-width="2" fill="none"/></svg>`,
+                shortStat: '25% Co-op Chain Lightning',
+                formula: (s) => `Every survivor arcs referral invites to ${2 + s} friends (+${s * 28}% K-Factor)`,
+                desc: '"...and his music was electric." Designs frictionless 4-player co-op lobby invite loops where bringing friends unlocks shared biome buffs and squad loot chests.'
+            },
+            {
+                id: 'crowbar-onboard',
+                name: 'Crowbar of Day-1 Onboarding',
+                rarity: 'common',
+                rarityLabel: 'COMMON',
+                stacks: 4,
+                icon: `<svg viewBox="0 0 48 48" class="w-10 h-10"><path d="M12 38 L34 14 C38 10 42 14 38 18 L32 24" stroke="#e2e8f0" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M12 38 L18 32" stroke="#f43f5e" stroke-width="5" stroke-linecap="round"/></svg>`,
+                shortStat: '+75% First-5-Min Activation',
+                formula: (s) => `+${50 + s * 25}% Activation Rate on new players above 90% HP`,
+                desc: 'Eliminates wallet-connect friction for Web2 gamers. Guests spawn into the Discord & game lobby in under 45 seconds before ever touching a seed phrase.'
+            },
+            {
+                id: 'lens-analytics',
+                name: "Lens-Maker's Dune Glasses",
+                rarity: 'common',
+                rarityLabel: 'COMMON',
+                stacks: 3,
+                icon: `<svg viewBox="0 0 48 48" class="w-10 h-10"><circle cx="16" cy="24" r="8" fill="#f43f5e" stroke="#fecdd3" stroke-width="2"/><circle cx="34" cy="24" r="8" fill="#f43f5e" stroke="#fecdd3" stroke-width="2"/><line x1="24" y1="24" x2="26" y2="24" stroke="#fecdd3" stroke-width="3"/></svg>`,
+                shortStat: '+30% Cohort Crit Insight',
+                formula: (s) => `${Math.min(100, s * 30)}% Attribution Visibility across Discord, Steam & On-Chain`,
+                desc: 'Full-funnel telemetry tracking which content creators, quests, and guild raids actually produce retained D30 survivors and on-chain crafters.'
+            },
+            {
+                id: 'obsidian-shield',
+                name: 'Obsidian Aegis of Anti-Sybil',
+                rarity: 'uncommon',
+                rarityLabel: 'UNCOMMON',
+                stacks: 2,
+                icon: `<svg viewBox="0 0 48 48" class="w-10 h-10"><polygon points="24,6 40,14 34,38 24,44 14,38 8,14" fill="#1e293b" stroke="#4ade80" stroke-width="2.5"/><polygon points="24,12 32,18 24,36 16,18" fill="#22d3ee"/></svg>`,
+                shortStat: 'Blocks 99.4% Bot Farms',
+                formula: (s) => `Purges ${Math.min(99.9, 95 + s * 2.2).toFixed(1)}% of multi-account script farmers`,
+                desc: 'Protects token allocations and playtest keys using behavioral proof-of-play checks, boss-kill verification, and dynamic guild vouching.'
+            },
+            {
+                id: 'clover-kol',
+                name: '57-Leaf Clover of Alpha Raids',
+                rarity: 'legendary',
+                rarityLabel: 'LEGENDARY',
+                stacks: 1,
+                icon: `<svg viewBox="0 0 48 48" class="w-10 h-10"><circle cx="24" cy="15" r="7" fill="#10b981"/><circle cx="15" cy="24" r="7" fill="#059669"/><circle cx="33" cy="24" r="7" fill="#34d399"/><circle cx="24" cy="33" r="7" fill="#10b981"/><circle cx="24" cy="24" r="4" fill="#facc15"/></svg>`,
+                shortStat: 'Rerolls Content for Viral Hits',
+                formula: (s) => `Rerolls creator campaigns ${s}x in favor of authentic gaming streamers`,
+                desc: 'Zero paid "shill threads." Partners with genuine roguelike/survival streamers & YouTube clip channels who play the build live with their communities.'
+            },
+            {
+                id: 'bungus-cozy',
+                name: 'Bustling Fungus (Bungus) Zone',
+                rarity: 'common',
+                rarityLabel: 'COMMON',
+                stacks: 5,
+                icon: `<svg viewBox="0 0 48 48" class="w-10 h-10"><path d="M18 28 L18 40 L30 40 L30 28" fill="#e2e8f0"/><path d="M8 28 C8 14 40 14 40 28 Z" fill="#f43f5e"/><circle cx="18" cy="22" r="3" fill="#22d3ee"/><circle cx="29" cy="20" r="2.5" fill="#22d3ee"/></svg>`,
+                shortStat: 'Heals Sentiment in Bear Markets',
+                formula: (s) => `Generates a +${s * 18}% weekly sentiment aura during quiet dev sprints`,
+                desc: 'Weekly Fireside Town Halls, live dev playtests, art showcases, and community meme contests that keep morale at 100% even between major updates.'
+            },
+            {
+                id: 'primordial-cube',
+                name: 'Primordial Cube of Guild Wars',
+                rarity: 'boss',
+                rarityLabel: 'BOSS // ON-CHAIN',
+                stacks: 1,
+                icon: `<svg viewBox="0 0 48 48" class="w-10 h-10"><polygon points="24,6 42,16 42,34 24,44 6,34 6,16" fill="#0f172a" stroke="#facc15" stroke-width="2.5"/><polygon points="24,14 34,20 24,26 14,20" fill="#a855f7"/><polygon points="24,26 34,20 34,32 24,38" fill="#7e22ce"/></svg>`,
+                shortStat: 'Pulls 15+ Partner Guilds In',
+                formula: (s) => `Gravitates ${15 * s}+ partner gaming DAOs into seasonal leaderboard wars`,
+                desc: 'Cross-ecosystem tournaments where partner Web3 games & guilds compete in custom Muck/roguelike seed races for collaborative prize pools.'
+            },
+            {
+                id: 'elixir-crisis',
+                name: 'Power Elixir of FUD Immunity',
+                rarity: 'uncommon',
+                rarityLabel: 'UNCOMMON',
+                stacks: 2,
+                icon: `<svg viewBox="0 0 48 48" class="w-10 h-10"><polygon points="20,8 28,8 28,16 38,38 10,38 20,16" fill="#06b6d4" stroke="#e2e8f0" stroke-width="2"/><polygon points="13,34 35,34 32,26 16,26" fill="#facc15"/></svg>`,
+                shortStat: 'Instant Crisis Recovery',
+                formula: (s) => `Auto-restores ${75 + s * 10}% community trust on server congestion or patch bugs`,
+                desc: 'Radical transparency, rapid incident post-mortems, and in-game "Survivor Compensation Loot Chests" that turn technical hiccups into beloved community lore.'
+            }
+        ];
+
+        let selectedItemId = 'magma-blade';
+        let currentItemFilter = 'all';
+
+        function renderItems() {
+            const grid = document.getElementById('item-grid');
+            const filtered = currentItemFilter === 'all'
+                ? loadoutItems
+                : loadoutItems.filter(i => i.rarity === currentItemFilter);
+
+            grid.innerHTML = filtered.map(item => {
+                const isSelected = item.id === selectedItemId;
+                return `
+                    <div onclick="selectItem('${item.id}', event)" class="item-slot poly-card p-3 rounded-xl border-2 rarity-${item.rarity} cursor-pointer flex flex-col items-center justify-between text-center relative ${isSelected ? 'ring-2 ring-cyan-300 bg-slate-900/95' : ''}">
+                        <span class="absolute top-1.5 right-2 font-mono text-xs font-extrabold text-white bg-slate-950/90 px-1.5 py-0.5 rounded border border-slate-700">
+                            x${item.stacks}
+                        </span>
+                        <div class="my-2">${item.icon}</div>
+                        <div class="font-mono text-[11px] font-bold text-white leading-tight line-clamp-2">${item.name}</div>
+                        <div class="font-mono text-[9px] text-cyan-300/90 mt-1">${item.shortStat}</div>
+                    </div>
+                `;
+            }).join('');
+
+            renderInspector();
+            updateTotalSynergy();
+        }
+
+        function renderInspector() {
+            const item = loadoutItems.find(i => i.id === selectedItemId) || loadoutItems[0];
+            const inspector = document.getElementById('item-inspector');
+            const rarityColors = {
+                boss: 'text-amber-300 border-amber-400/50 bg-amber-500/10',
+                legendary: 'text-rose-400 border-rose-400/50 bg-rose-500/10',
+                uncommon: 'text-emerald-300 border-emerald-400/50 bg-emerald-500/10',
+                common: 'text-slate-200 border-slate-400/50 bg-slate-500/10'
+            };
+
+            inspector.innerHTML = `
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-700">
+                            ${item.icon}
+                        </div>
+                        <div>
+                            <span class="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded border ${rarityColors[item.rarity]}">
+                                ${item.rarityLabel} // STACK: x${item.stacks}
+                            </span>
+                            <h4 class="font-syne text-lg font-extrabold text-white mt-1">${item.name}</h4>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">${item.desc}</p>
+                <div class="p-3 rounded-xl bg-slate-900 border border-cyan-500/30 font-mono text-xs">
+                    <div class="text-[10px] text-slate-400 uppercase">ACTIVE STACK EFFECT (x${item.stacks}):</div>
+                    <div class="text-cyan-300 font-bold mt-0.5">${item.formula(item.stacks)}</div>
+                </div>
+                <div class="flex items-center justify-between pt-1">
+                    <span class="font-mono text-[10px] text-slate-400">ROR2 / MUCK ITEM ID: #${item.id.toUpperCase()}</span>
+                    <button onclick="stackCurrentItem(event)" class="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-mono text-xs font-extrabold transition-all">
+                        + STACK ITEM (x${item.stacks + 1})
+                    </button>
+                </div>
+            `;
+        }
+
+        function selectItem(id, event) {
+            selectedItemId = id;
+            playSfx('item');
+            if (event) {
+                spawnFloatingDamage(event.clientX, event.clientY, 'ITEM EQUIPPED!', '#22d3ee');
+            }
+            renderItems();
+        }
+
+        function stackCurrentItem(event) {
+            const item = loadoutItems.find(i => i.id === selectedItemId);
+            if (item) {
+                item.stacks++;
+                playSfx('item');
+                gainXP(45);
+                if (event) {
+                    spawnFloatingDamage(event.clientX, event.clientY, `STACK x${item.stacks}!`, '#facc15');
+                }
+                renderItems();
+            }
+        }
+
+        function stackAllItems() {
+            loadoutItems.forEach(i => i.stacks++);
+            playSfx('shrine');
+            gainXP(150);
+            showToast('🎒 ALL ITEMS STACKED +1!', 'Growth synergies compounded across all 10 slots.');
+            renderItems();
+        }
+
+        function filterItems(rarity) {
+            currentItemFilter = rarity;
+            renderItems();
+        }
+
+        function updateTotalSynergy() {
+            const totalStacks = loadoutItems.reduce((acc, i) => acc + i.stacks, 0);
+            const refBoost = totalStacks * 14;
+            const cacRed = Math.min(89, 42 + totalStacks);
+            document.getElementById('total-stack-bonus').textContent =
+                `+${refBoost}% Organic Referral Velocity // -${cacRed}% Paid CAC (${totalStacks} Total Stacks)`;
+        }
+
+        /* =====================================================================
+           3. EXPERIENCE RUN LOGS DATA & RENDERING
+           ===================================================================== */
+        const runLogs = [
+            {
+                stage: 'STAGE 04 // CURRENT RUN (2024 — PRESENT)',
+                role: 'Head of Community & Growth',
+                studio: 'AetherShards Protocol (Web3 Low-Poly Survival RPG)',
+                biome: 'Muck Seed #904 // Floating Crystal Isles',
+                badgeColor: 'text-emerald-300 border-emerald-400/50 bg-emerald-500/15',
+                bossDefeated: 'Mercenary Bot Swarm (Purged 42k Sybils)',
+                kpis: ['1.2k → 68.4k Survivors', '94.2% Island NFT Hold Rate', '64.8% D30 Playtest Retention'],
+                summary: 'Architected the entire community & growth loop from pre-alpha to Season 3 open playtest. Replaced paid quest platforms with an in-game "Glowing Rune" co-op referral system.',
+                telemetry: [
+                    'Designed 4-player Co-op Friend Pass loop achieving a 2.45x viral K-factor across Steam & Epic Web3 launchers.',
+                    'Orchestrated "Cavern of the Bifurcated Blade" ARG lore hunt generating 1.4M organic X impressions and 11,000+ user-created gameplay clips.',
+                    'Built Soulbound Elder Council where top 200 raid captains co-design seasonal biome modifiers with the dev team.'
+                ]
+            },
+            {
+                stage: 'STAGE 03 // COMPLETED RUN (2022 — 2024)',
+                role: 'Growth & Ecosystem Lead',
+                studio: 'RunicLabs (On-Chain Roguelike Studio)',
+                biome: 'Petrichor V // Abyssal Depths',
+                badgeColor: 'text-cyan-300 border-cyan-400/50 bg-cyan-500/15',
+                bossDefeated: 'Bear Market Liquidity Winter',
+                kpis: ['$14.8M Crafting Volume', '180+ Micro-Streamer Squads', '0$ Paid KOL Shill Spend'],
+                summary: 'Spearheaded creator ecosystems, guild partnerships, and the genesis "Runic Islands" mint during the peak of the crypto bear market—selling out in 11 minutes to verified playtesters.',
+                telemetry: [
+                    'Launched the "Artifact of Command" Creator Bounty Board paying micro-streamers automatically per verified co-op boss kill.',
+                    'Maintained 88%+ Discord weekly active participation across 18 months via live weekly co-op dev raids.',
+                    'Integrated Dune & on-chain cohort dashboards linking Discord roles directly to in-game retention and DEX liquidity.'
+                ]
+            },
+            {
+                stage: 'STAGE 02 // COMPLETED RUN (2021 — 2022)',
+                role: 'Community Strategist & Lore Architect',
+                studio: 'PolyRealm Gaming DAO',
+                biome: 'Sky Meadow // Guild Citadel',
+                badgeColor: 'text-amber-300 border-amber-400/50 bg-amber-500/15',
+                bossDefeated: 'Governance Apathy & Whale Monopoly',
+                kpis: ['25+ Partner Gaming Guilds', '91% Proposal Turnout', '45k Active Raiders'],
+                summary: 'Transformed a passive token-holder Discord into a competitive cross-game raid alliance spanning 25+ Web3 and indie survival titles.',
+                telemetry: [
+                    'Created weekly "Island Wars" speedrun tournaments pitting partner guilds against each other in custom roguelike seeds.',
+                    'Authored quadratic reputation governance model giving active raid leaders equal voting weight to treasury whales.'
+                ]
+            },
+            {
+                stage: 'STAGE 01 // ORIGIN SPAWN (2019 — 2021)',
+                role: 'Indie Game Modder & Co-op Discord Architect',
+                studio: 'Muck, Risk of Rain 2 & Valheim Modding Scene',
+                biome: 'Emerald Dawn // Modder Sanctuary',
+                badgeColor: 'text-purple-300 border-purple-400/50 bg-purple-500/15',
+                bossDefeated: 'Solo-Queue Matchmaking Churn',
+                kpis: ['32k Co-op Matchmaking Hub', '450k+ Mod Downloads', '100-Player Muck Chaos Events'],
+                summary: 'Built custom matchmaking bots, server mods, and 100-player survival island events for indie hits before stepping into Web3 gaming.',
+                telemetry: [
+                    'Hosted viral 100-player Muck survival weekends with custom boss scaling and live Twitch commentary.',
+                    'Learned firsthand why authentic gamer culture, inside jokes, and tight gameplay loops beat corporate marketing every time.'
+                ]
+            }
+        ];
+
+        function renderRunLogs() {
+            const container = document.getElementById('run-logs-container');
+            container.innerHTML = runLogs.map((log, idx) => `
+                <div class="poly-card p-6 rounded-2xl flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="font-mono text-[10px] font-extrabold px-2.5 py-1 rounded border ${log.badgeColor}">
+                                ${log.stage}
+                            </span>
+                            <span class="font-mono text-[11px] text-slate-400">🗺️ ${log.biome}</span>
+                        </div>
+                        <div>
+                            <h3 class="font-syne text-xl font-extrabold text-white">${log.role}</h3>
+                            <div class="font-mono text-xs text-cyan-300 font-semibold">${log.studio}</div>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">${log.summary}</p>
+                        
+                        <!-- Key KPI Pills -->
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            ${log.kpis.map(k => `
+                                <span onclick="spawnCritAtElement(this, '${k}')" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-400 font-mono text-[11px] font-bold text-emerald-300 cursor-pointer transition-all">
+                                    ◆ ${k}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-800/80 space-y-3">
+                        <div class="flex items-center justify-between font-mono text-xs">
+                            <span class="text-rose-400 font-semibold">💀 BOSS DEFEATED: ${log.bossDefeated}</span>
+                            <button onclick="toggleRunTelemetry(${idx})" class="text-cyan-300 hover:text-cyan-200 underline font-bold">
+                                [INSPECT TELEMETRY]
+                            </button>
+                        </div>
+                        <div id="run-telemetry-${idx}" class="${idx === 0 ? '' : 'hidden'} p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-1.5 font-mono text-xs text-slate-300">
+                            ${log.telemetry.map(t => `<div class="flex items-start gap-2"><span class="text-cyan-400">▸</span><span>${t}</span></div>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleRunTelemetry(idx) {
+            const el = document.getElementById(`run-telemetry-${idx}`);
+            el.classList.toggle('hidden');
+            playSfx('item');
+        }
+
+        /* =====================================================================
+           4. SHRINE OF THE WOODS (COMMUNITY SIMULATOR)
+           ===================================================================== */
+        const shrineData = [
+            {
+                title: '// LIVE GUILD TERMINAL: ARG LORE & RUNE QUESTS',
+                subtitle: 'Zero "wen token" spam • 92% high-effort gameplay & lore discussion',
+                online: '4,812 IN CAVERN RAID',
+                messages: [
+                    { user: 'Kaelen.eth [Rune Bearer]', badge: 'text-cyan-300', text: 'Wait—look at the stalactites in Sector 4 of the Ice Cavern! The glowing Algiz rune spells out a coordinate seed: 884-MUCK-19!' },
+                    { user: 'Valkyrie_GG [Island Elder]', badge: 'text-amber-300', text: 'Just tested that seed with a 4-stack! It spawns a hidden Magma Guardian boss that drops the Bifurcated Greatsword blueprint!' },
+                    { user: 'Lina.eth [Architect]', badge: 'text-emerald-300', text: '👀 First 50 squads to post a co-op screenshot holding the Magma Blade unlock the Soulbound Cavern Pioneer rune on-chain.' },
+                    { user: 'Degen Gronk [Fresh Spawn]', badge: 'text-slate-300', text: 'Bro I came here for an airdrop 3 weeks ago and now I have 60 hours played and a spreadsheet of mushroom spawn timers 😂' }
+                ]
+            },
+            {
+                title: '// LIVE GUILD TERMINAL: CREATOR RAID PARTIES',
+                subtitle: '180+ Micro-Streamers & Clip Squads • Automated On-Chain Bounties',
+                online: '6,190 STREAMING / CLIPPING',
+                messages: [
+                    { user: 'Twitch_MuckLord [Creator Squad]', badge: 'text-emerald-300', text: 'Our 20-player island defense stream just peaked at 3,400 concurrent viewers! Dropping the co-op lobby referral code in chat now.' },
+                    { user: 'ClipGoblin [Rune Bearer]', badge: 'text-cyan-300', text: 'Posted the clip where our tank got launched into orbit by a Golem—already at 140k views on TikTok & X!' },
+                    { user: 'BountyBot [On-Chain Relay]', badge: 'text-amber-300', text: '⚡ QUEST VERIFIED: +450 RUNE XP & Creator Loot Chest automatically minted to @ClipGoblin (38 new referrals tracked).' },
+                    { user: 'Lina.eth [Architect]', badge: 'text-emerald-300', text: 'Friday Night Boss Rush starts in 2 hours! Every streamer squad that survives Stage 10 unlocks custom guild banners.' }
+                ]
+            },
+            {
+                title: '// LIVE GUILD TERMINAL: SOULBOUND ELDER DAO',
+                subtitle: 'Proof-of-Play Governance • Playtime + Mentorship = Voting Power',
+                online: '2,940 ELDERS VOTING',
+                messages: [
+                    { user: 'Proposal #42 [Passed 94.6%]', badge: 'text-amber-300', text: 'Allocate 15% of Season 4 DEX crafting fees to community modders who build custom low-poly island biomes.' },
+                    { user: 'Elder_Thorne [Island Elder]', badge: 'text-amber-300', text: 'Love that my 120 hours of mentoring Fresh Spawns gives me real governance weight here instead of getting outvoted by idle whales.' },
+                    { user: 'RuneGuard_Bot [Anti-Sybil]', badge: 'text-cyan-300', text: '🛡️ Blocked 1,420 bot wallets with 0 boss kills from voting on Biome Balance Patch v2.4.' },
+                    { user: 'Lina.eth [Architect]', badge: 'text-emerald-300', text: 'Patch v2.4 goes live at dawn! Community-voted Glowing Mushroom biome buff is officially in the build.' }
+                ]
+            }
+        ];
+
+        let currentShrineIdx = 0;
+        let shrineOfferings = 3;
+
+        function selectShrine(idx) {
+            currentShrineIdx = idx;
+            playSfx('shrine');
+            for (let i = 0; i < 3; i++) {
+                const tab = document.getElementById(`shrine-tab-${i}`);
+                if (i === idx) {
+                    tab.className = 'shrine-tab w-full text-left poly-card p-4 rounded-xl border-2 border-cyan-400 transition-all';
+                } else {
+                    tab.className = 'shrine-tab w-full text-left poly-card p-4 rounded-xl border border-slate-700/80 hover:border-cyan-400/50 transition-all';
+                }
+            }
+            renderShrineFeed();
+        }
+
+        function renderShrineFeed() {
+            const data = shrineData[currentShrineIdx];
+            document.getElementById('shrine-title').textContent = data.title;
+            document.getElementById('shrine-subtitle').textContent = data.subtitle;
+            document.getElementById('shrine-online-count').textContent = data.online;
+
+            const feed = document.getElementById('shrine-feed');
+            feed.innerHTML = data.messages.map(m => `
+                <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold ${m.badge}">${m.user}</span>
+                        <span class="text-[10px] text-slate-500">VERIFIED SURVIVOR</span>
+                    </div>
+                    <p class="text-slate-200 leading-relaxed">${m.text}</p>
+                </div>
+            `).join('');
+        }
+
+        function triggerShrineEvent() {
+            shrineOfferings++;
+            document.getElementById('shrine-count').textContent = `OFFERINGS: ${shrineOfferings}`;
+            playSfx('shrine');
+            gainXP(90);
+
+            const bonusEvents = [
+                { user: '⛩️ SHRINE OF THE WOODS [WORLD EVENT]', badge: 'text-amber-300', text: 'Lina activated a Golden Rune Shrine! 420 new survivors just spawned into Co-op Lobbies (+94% D1 Retention).' },
+                { user: '⚔️ BOSS RAID CLEARED [ON-CHAIN]', badge: 'text-emerald-300', text: '12 Partner Guilds defeated the Obsidian Guardian! 3,800 Soulbound Achievement Runes minted with $0 gas.' },
+                { user: '💎 VIRAL CLIP SURGE [ORGANIC]', badge: 'text-cyan-300', text: 'Community Muck-style survival challenge hit #3 on gaming trending—+2,900 organic Discord joins in 4 hours!' }
+            ];
+            const ev = bonusEvents[shrineOfferings % bonusEvents.length];
+            shrineData[currentShrineIdx].messages.unshift(ev);
+            renderShrineFeed();
+            showToast('⛩️ SHRINE BLESSING GRANTED!', '+90 XP! Simulated live community raid event.');
+        }
+
+        /* =====================================================================
+           5. GROWTH FUNNEL & ARTIFACT SIMULATOR
+           ===================================================================== */
+        function updateGrowthSimulation() {
+            const swarms = document.getElementById('art-swarms').checked;
+            const command = document.getElementById('art-command').checked;
+            const kin = document.getElementById('art-kin').checked;
+            const sacrifice = document.getElementById('art-sacrifice').checked;
+            const seed = parseInt(document.getElementById('seed-slider').value, 10);
+
+            document.getElementById('seed-val-label').textContent = `${seed.toLocaleString()} Players`;
+
+            let multiplier = 3.2;
+            let retention = 42.0;
+            let kFactor = 1.15;
+            let cac = 2.40;
+
+            if (swarms) { multiplier += 3.8; retention += 11.5; kFactor += 0.65; cac -= 0.75; }
+            if (command) { multiplier += 2.9; retention += 7.2; kFactor += 0.35; cac -= 0.55; }
+            if (kin) { multiplier += 2.4; retention += 6.8; kFactor += 0.25; cac -= 0.45; }
+            if (sacrifice) { multiplier += 2.1; retention += 8.4; kFactor += 0.20; cac -= 0.35; }
+
+            const projectedDau = Math.round(seed * multiplier);
+            cac = Math.max(0.18, cac);
+
+            document.getElementById('sim-dau').textContent = projectedDau.toLocaleString();
+            document.getElementById('sim-ret').textContent = `${retention.toFixed(1)}%`;
+            document.getElementById('sim-k').textContent = `${kFactor.toFixed(2)}x`;
+            document.getElementById('sim-cac').textContent = `$${cac.toFixed(2)}`;
+
+            // Dynamically adjust SVG curve height
+            const endY = Math.max(18, 175 - (projectedDau / 1400));
+            const midY1 = Math.max(45, 165 - (projectedDau / 2800));
+            const midY2 = Math.max(30, 130 - (projectedDau / 1900));
+
+            const dPath = `M 40 170 C 180 ${midY1}, 340 ${midY2}, 580 ${endY}`;
+            document.getElementById('organic-path').setAttribute('d', dPath);
+            document.getElementById('organic-area').setAttribute('d', `${dPath} L 580 195 L 40 195 Z`);
+            playSfx('item');
+        }
+
+        /* =====================================================================
+           6. TELEPORTER CTA, HUD XP, DIFFICULTY TIMER & WALLET COPY
+           ===================================================================== */
+        let teleporterCharge = 0;
+        let survivorXP = 650;
+        let survivorLvl = 27;
+        let runSeconds = 252; // Starts at 04:12
+        let overclockMultiplier = 1;
+
+        function chargeTeleporter() {
+            teleporterCharge = Math.min(100, teleporterCharge + 25);
+            playSfx('teleporter');
+            gainXP(80);
+
+            document.getElementById('teleporter-fill').style.width = `${teleporterCharge}%`;
+            document.getElementById('teleporter-pct').textContent = `${teleporterCharge}%`;
+            document.getElementById('teleporter-sub').textContent =
+                teleporterCharge < 100
+                    ? `CHARGING TELEPORTER: ${teleporterCharge}% // CLICK AGAIN TO REACH 100%`
+                    : `TELEPORTER READY! BOSS LOOT DROPPED!`;
+
+            // Pulse 3D island rotation speed on charge
+            islandBoostSpin = 0.06;
+
+            if (teleporterCharge >= 100) {
+                const modal = document.getElementById('boss-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                teleporterCharge = 0;
+                setTimeout(() => {
+                    document.getElementById('teleporter-fill').style.width = '0%';
+                    document.getElementById('teleporter-pct').textContent = '0%';
+                }, 600);
+            }
+        }
+
+        function closeBossModal(scrollToSelector) {
+            const modal = document.getElementById('boss-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('hud-hp-text').textContent = '2,400 / 2,400 [BUFFED]';
+            showToast('👑 BOSS BUFF EQUIPPED!', 'All survivor stats boosted by +50%!');
+            if (scrollToSelector) {
+                document.querySelector(scrollToSelector)?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function gainXP(amount) {
+            survivorXP += amount;
+            if (survivorXP >= 1000) {
+                survivorXP -= 1000;
+                survivorLvl++;
+                document.getElementById('hud-lvl').textContent = survivorLvl;
+                showToast(`🎉 LEVEL UP! [LVL ${survivorLvl}]`, 'Lina gained +120 Max HP & +5% Viral Referral Crit!');
+            }
+            const pct = Math.min(100, (survivorXP / 1000) * 100);
+            document.getElementById('hud-xp-bar').style.width = `${pct}%`;
+            document.getElementById('hud-xp-text').textContent = `${survivorXP} / 1000`;
+        }
+
+        function toggleOverclock() {
+            overclockMultiplier = overclockMultiplier === 1 ? 15 : 1;
+            const btn = document.getElementById('overclock-btn');
+            btn.textContent = `${overclockMultiplier}x`;
+            btn.className = overclockMultiplier > 1
+                ? 'px-2 py-1 rounded bg-rose-500 text-slate-950 font-extrabold text-[10px] font-mono transition-all'
+                : 'px-2 py-1 rounded bg-slate-800 hover:bg-rose-500/20 border border-slate-600 text-[10px] font-mono text-slate-300 transition-all';
+            showToast(
+                overclockMultiplier > 1 ? '⚡ MARKET CYCLE 15x OVERCLOCK' : '⏱️ NORMAL MARKET SPEED',
+                'Risk of Rain 2 Difficulty Scaling Bar updated.'
+            );
+        }
+
+        // Risk of Rain 2 Difficulty Timer Loop
+        setInterval(() => {
+            runSeconds += overclockMultiplier;
+            const mins = Math.floor(runSeconds / 60).toString().padStart(2, '0');
+            const secs = (runSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('hud-timer').textContent = `${mins}:${secs}`;
+
+            const stages = [
+                { label: 'EASY // SEED_ROUND', color: 'text-emerald-400' },
+                { label: 'MEDIUM // ALPHA_PLAYTEST', color: 'text-lime-400' },
+                { label: 'HARD // ORGANIC_GROWTH', color: 'text-yellow-400' },
+                { label: 'VERY HARD // TGE_LAUNCH', color: 'text-orange-400' },
+                { label: 'INSANE // VIRAL_SWARM', color: 'text-rose-400' },
+                { label: 'I SEE YOU // 100K_DAU', color: 'text-purple-400' },
+                { label: 'HAHAHAHA // BULL_RUN', color: 'text-cyan-300' }
+            ];
+            const stageIdx = Math.min(stages.length - 1, Math.floor((runSeconds % 700) / 100));
+            const cursorPct = ((runSeconds % 700) / 700) * 94;
+            document.getElementById('hud-diff-cursor').style.left = `${cursorPct}%`;
+            const lbl = document.getElementById('hud-diff-label');
+            lbl.textContent = stages[stageIdx].label;
+            lbl.className = `font-mono text-[10px] font-extrabold tracking-wider uppercase ${stages[stageIdx].color}`;
+        }, 1000);
+
+        // Copy Wallet / ENS with fallback
+        function copyWallet() {
+            const addr = '0x71C8F92b4E01b3A924E09A4B';
+            const tempInput = document.createElement('textarea');
+            tempInput.value = addr;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            playSfx('item');
+            showToast('💎 WALLET COPIED: lina.eth', `${addr} copied to clipboard!`);
+        }
+
+        function copyDiscord() {
+            const handle = 'lina.gg';
+            const tempInput = document.createElement('textarea');
+            tempInput.value = handle;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            playSfx('item');
+            showToast('👾 DISCORD COPIED: lina.gg', 'Ready to paste in Discord Add Friend!');
+        }
+
+        function showToast(title, desc) {
+            const toast = document.getElementById('loot-toast');
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-desc').textContent = desc;
+            toast.classList.remove('opacity-0', 'translate-y-[-10px]');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 3200);
+        }
+
+        function toggleFreeLook() {
+            document.body.classList.toggle('free-look-mode');
+            const isFree = document.body.classList.contains('free-look-mode');
+            document.getElementById('freelook-btn').textContent = isFree ? '✨ SHOW UI' : '👁️ 3D VIEW';
+            showToast(
+                isFree ? '👁️ FREE-LOOK 3D ISLAND MODE' : '📋 PORTFOLIO HUD RESTORED',
+                isFree ? 'Drag to rotate island, click to swing blade!' : 'UI overlay active.'
+            );
+        }
+
+        /* =====================================================================
+           7. CAMPFIRE LOGBOOK (LOCALSTORAGE GUESTBOOK), LIVE CLOCK & SECRETS
+           ===================================================================== */
+        const CAMPFIRE_KEY = 'lina_campfire_logs_v1';
+        const CRITS_KEY = 'lina_sword_crits_v1';
+        let totalCritsDealt = parseInt(localStorage.getItem(CRITS_KEY) || '12', 10);
+
+        function incrementCritCounter() {
+            totalCritsDealt++;
+            try {
+                localStorage.setItem(CRITS_KEY, String(totalCritsDealt));
+            } catch (e) {}
+            renderCritCounter();
+        }
+
+        function renderCritCounter() {
+            const el = document.getElementById('crit-counter');
+            if (el) {
+                el.textContent = String(totalCritsDealt).padStart(6, '0');
+            }
+        }
+
+        function getCampfireLogs() {
+            try {
+                const raw = localStorage.getItem(CAMPFIRE_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            // Default starter note so the logbook feels alive immediately
+            return [
+                {
+                    text: 'spawned at seed #884920 — remember to stack 5x bungus before stage 4 boss.',
+                    date: 'saved in browser'
+                }
+            ];
+        }
+
+        function renderCampfireLogs() {
+            const container = document.getElementById('campfire-notes');
+            if (!container) return;
+            const logs = getCampfireLogs();
+            if (logs.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 italic">campfire ashes are quiet. carve the first rune note above.</div>`;
+                return;
+            }
+            container.innerHTML = logs.map((entry, idx) => `
+                <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-900/90 border border-slate-800/90">
+                    <div class="flex items-center gap-2 truncate">
+                        <span class="text-amber-400">ᛉ</span>
+                        <span class="text-slate-200 truncate">${entry.text.replace(/</g, '&lt;')}</span>
+                    </div>
+                    <span class="text-[10px] text-slate-500 shrink-0">${entry.date}</span>
+                </div>
+            `).join('');
+        }
+
+        function signCampfireLog(e) {
+            e.preventDefault();
+            const input = document.getElementById('campfire-input');
+            const val = input.value.trim();
+            if (!val) return;
+
+            const logs = getCampfireLogs();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            logs.unshift({ text: val, date: timeStr });
+            try {
+                localStorage.setItem(CAMPFIRE_KEY, JSON.stringify(logs.slice(0, 12)));
+            } catch (err) {}
+
+            input.value = '';
+            playSfx('shrine');
+            gainXP(60);
+            renderCampfireLogs();
+            showToast('🔥 RUNE CARVED IN LOGBOOK', 'Saved locally in your browser (+60 XP).');
+        }
+
+        function clearCampfireLogs() {
+            try {
+                localStorage.setItem(CAMPFIRE_KEY, JSON.stringify([]));
+            } catch (e) {}
+            playSfx('item');
+            renderCampfireLogs();
+            showToast('🔥 CAMPFIRE ASHES CLEARED', 'Local browser notes reset.');
+        }
+
+        function updateLiveClock() {
+            const el = document.getElementById('live-local-clock');
+            if (!el) return;
+            const now = new Date();
+            el.textContent = now.toLocaleTimeString([], { hour12: false });
+        }
+        setInterval(updateLiveClock, 1000);
+
+        function toggleSecretsModal() {
+            const modal = document.getElementById('secrets-modal');
+            if (!modal) return;
+            const isHidden = modal.classList.contains('hidden');
+            if (isHidden) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                playSfx('item');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Keyboard Shortcuts Listener (?, 1, 2, 3, Space, E, V, M)
+        window.addEventListener('keydown', (e) => {
+            const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+            if (tag === 'input' || tag === 'textarea') return;
+
+            if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+                e.preventDefault();
+                toggleSecretsModal();
+            } else if (e.key === 'Escape') {
+                const modal = document.getElementById('secrets-modal');
+                if (modal && !modal.classList.contains('hidden')) toggleSecretsModal();
+            } else if (e.key === '1') {
+                setBiome(0);
+            } else if (e.key === '2') {
+                setBiome(1);
+            } else if (e.key === '3') {
+                setBiome(2);
+            } else if (e.key === 'e' || e.key === 'E') {
+                chargeTeleporter();
+            } else if (e.key === 'v' || e.key === 'V') {
+                toggleFreeLook();
+            } else if (e.key === 'm' || e.key === 'M') {
+                toggleAudio();
+            } else if (e.code === 'Space') {
+                e.preventDefault();
+                triggerManualSlash();
+            }
+        });
+
+        // Auto-fade bottom HUD when scrolled to the bottom contact section
+        window.addEventListener('scroll', () => {
+            const scrolledToBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 160);
+            document.body.classList.toggle('at-island-edge', scrolledToBottom);
+        });
+
+        /* =====================================================================
+           8. 2D CYAN CRESCENT SLASH & FLOATING MUCK DAMAGE NUMBERS OVERLAY
+           ===================================================================== */
+        const fxCanvas = document.getElementById('fx-overlay');
+        const fxCtx = fxCanvas.getContext('2d');
+        const floatingTexts = [];
+        const slashArcs = [];
+
+        const critPhrases = [
+            { text: '+34 XP', color: '#f1f5f9' },
+            { text: '+120 DAU', color: '#4ade80' },
+            { text: 'CRIT! +420% TVL', color: '#facc15' },
+            { text: '+17 GM', color: '#22d3ee' },
+            { text: '+94% RETENTION', color: '#38bdf8' },
+            { text: 'SYBIL BLOCKED!', color: '#f43f5e' },
+            { text: '+85 RUNE XP', color: '#a855f7' }
+        ];
+
+        function resizeFxCanvas() {
+            fxCanvas.width = window.innerWidth;
+            fxCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeFxCanvas);
+        resizeFxCanvas();
+
+        function spawnFloatingDamage(x, y, customText, customColor) {
+            incrementCritCounter();
+            const pick = critPhrases[Math.floor(Math.random() * critPhrases.length)];
+            const text = customText || pick.text;
+            const color = customColor || pick.color;
+
+            // Spawn Muck-style glowing cyan crescent slash arc (like Image 3!)
+            slashArcs.push({
+                x,
+                y,
+                angle: (Math.random() - 0.5) * 1.4,
+                radius: 42 + Math.random() * 22,
+                life: 1.0
+            });
+
+            // Spawn 1 main + 2 mini damage numbers
+            floatingTexts.push({
+                x: x + (Math.random() - 0.5) * 20,
+                y: y - 10,
+                vx: (Math.random() - 0.5) * 2.5,
+                vy: -3.2 - Math.random() * 1.5,
+                text,
+                color,
+                size: customText ? 16 : 18,
+                life: 1.0
+            });
+
+            // Secondary smaller Muck damage numbers (e.g., 34, 17)
+            const subNums = ['34', '17', '120'];
+            floatingTexts.push({
+                x: x + (Math.random() - 0.5) * 45,
+                y: y + 8,
+                vx: (Math.random() - 0.5) * 3,
+                vy: -2.2,
+                text: subNums[Math.floor(Math.random() * subNums.length)],
+                color: '#ffffff',
+                size: 13,
+                life: 0.85
+            });
+        }
+
+        function spawnCritAtElement(el, text) {
+            const rect = el.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            playSfx('slash');
+            gainXP(35);
+            triggerKnightSwing();
+            spawnFloatingDamage(x, y, text, '#facc15');
+        }
+
+        function triggerManualSlash() {
+            const x = window.innerWidth * (0.35 + Math.random() * 0.3);
+            const y = window.innerHeight * (0.35 + Math.random() * 0.25);
+            playSfx('slash');
+            gainXP(34);
+            triggerKnightSwing();
+            spawnFloatingDamage(x, y);
+        }
+
+        // Listen for clicks on the background canvas to trigger Muck slash + XP
+        window.addEventListener('pointerdown', (e) => {
+            if (e.target.id === 'world-canvas') {
+                playSfx('slash');
+                gainXP(25);
+                triggerKnightSwing();
+                spawnFloatingDamage(e.clientX, e.clientY);
+            }
+        });
+
+        function updateFxOverlay() {
+            fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+
+            // Render glowing cyan crescent slashes (inspired by Reference Image 3)
+            for (let i = slashArcs.length - 1; i >= 0; i--) {
+                const s = slashArcs[i];
+                s.life -= 0.06;
+                if (s.life <= 0) {
+                    slashArcs.splice(i, 1);
+                    continue;
+                }
+                fxCtx.save();
+                fxCtx.translate(s.x, s.y);
+                fxCtx.rotate(s.angle);
+                fxCtx.beginPath();
+                fxCtx.arc(0, 0, s.radius, -Math.PI * 0.65, Math.PI * 0.65);
+                fxCtx.strokeStyle = `rgba(34, 211, 238, ${s.life})`;
+                fxCtx.lineWidth = 7 * s.life;
+                fxCtx.shadowColor = '#00f5d4';
+                fxCtx.shadowBlur = 18;
+                fxCtx.stroke();
+                fxCtx.restore();
+            }
+
+            // Render floating combat/telemetry numbers
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.x += ft.vx;
+                ft.y += ft.vy;
+                ft.vy += 0.09; // Gravity
+                ft.life -= 0.022;
+                if (ft.life <= 0) {
+                    floatingTexts.splice(i, 1);
+                    continue;
+                }
+                fxCtx.save();
+                fxCtx.font = `800 ${ft.size}px "JetBrains Mono", monospace`;
+                fxCtx.fillStyle = ft.color;
+                fxCtx.globalAlpha = Math.max(0, ft.life);
+                fxCtx.shadowColor = '#000000';
+                fxCtx.shadowBlur = 6;
+                fxCtx.fillText(ft.text, ft.x, ft.y);
+                fxCtx.restore();
+            }
+        }
+
+        /* =====================================================================
+           9. THREE.JS LOW-POLY 3D WORLD (MUCK + RISK OF RAIN 2 FLOATING ISLAND)
+           ===================================================================== */
+        let scene, camera, renderer;
+        let islandGroup, knightGroup, swordPivot, runeLight, teleporterRing, crystalCore;
+        let grassMeshes = [];
+        let mushroomGroup, cavernArchGroup, pineGroup;
+        let floatingShards = [];
+        let islandBoostSpin = 0;
+        let knightSwingTime = 0;
+        let currentBiome = 0;
+
+        // Biome Color Palettes matching the 3 user reference images
+        const biomes = [
+            {
+                // [01] Emerald Island (Image 2: Muck sunny island, emerald grass, blue sky)
+                name: 'EMERALD_ISLAND',
+                skyColor: 0x0c223f,
+                fogColor: 0x0e2a47,
+                sunColor: 0xfffbeb,
+                ambientColor: 0x38bdf8,
+                topSoilColor: 0x22c55e,
+                grassColor: 0x4ade80,
+                rockColor: 0x475569,
+                runeColor: 0x00f5d4
+            },
+            {
+                // [02] Rune Cavern (Image 1: Ice/Crystal cavern, slate rocks, coral mushrooms, cyan rune)
+                name: 'RUNE_CAVERN',
+                skyColor: 0x091326,
+                fogColor: 0x0d1b33,
+                sunColor: 0x7dd3fc,
+                ambientColor: 0x1e3a8a,
+                topSoilColor: 0xcbd5e1,
+                grassColor: 0x38bdf8,
+                rockColor: 0x64748b,
+                runeColor: 0x22d3ee
+            },
+            {
+                // [03] Teleporter Night (Image 3 + RoR2: Autumn golden grass, neon dusk, boss teleporter)
+                name: 'TELEPORTER_NIGHT',
+                skyColor: 0x120924,
+                fogColor: 0x190d30,
+                sunColor: 0xfb923c,
+                ambientColor: 0xa855f7,
+                topSoilColor: 0xd97706,
+                grassColor: 0xf59e0b,
+                rockColor: 0x312e81,
+                runeColor: 0xf43f5e
+            }
+        ];
+
+        let dirLight, ambLight, topGrassCapMesh, rockBaseMesh;
+
+        function initThreeWorld() {
+            const canvas = document.getElementById('world-canvas');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(biomes[0].skyColor);
+            scene.fog = new THREE.FogExp2(biomes[0].fogColor, 0.022);
+
+            camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 200);
+            camera.position.set(0, 6.5, 19);
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+
+            // Lights
+            ambLight = new THREE.AmbientLight(biomes[0].ambientColor, 0.65);
+            scene.add(ambLight);
+
+            dirLight = new THREE.DirectionalLight(biomes[0].sunColor, 1.15);
+            dirLight.position.set(14, 24, 16);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            runeLight = new THREE.PointLight(0x00f5d4, 2.2, 14);
+            runeLight.position.set(-3.2, 2.6, 0.5);
+            scene.add(runeLight);
+
+            // Master Floating Island Group
+            islandGroup = new THREE.Group();
+            islandGroup.position.set(2.2, -1.2, 0);
+            scene.add(islandGroup);
+
+            buildFloatingIsland();
+            buildLowPolyFloraAndRocks();
+            buildGlowingRuneMonolith();
+            buildCavernStalactitesAndMushrooms();
+            buildPrimordialTeleporter();
+            buildLowPolyKnightAvatar();
+            buildOrbitingWeb3Shards();
+
+            window.addEventListener('resize', onWindowResize);
+            setupMouseCameraParallax();
+        }
+
+        // 1. Faceted Floating Island Base
+        function buildFloatingIsland() {
+            // Rocky inverted low-poly cone bottom
+            const rockGeo = new THREE.ConeGeometry(7.5, 6.5, 9, 2);
+            rockGeo.rotateX(Math.PI);
+            // Jitter vertices for authentic Muck faceted rock look
+            const pos = rockGeo.attributes.position;
+            for (let i = 0; i < pos.count; i++) {
+                const y = pos.getY(i);
+                if (y < 2.8) {
+                    pos.setX(i, pos.getX(i) + (Math.random() - 0.5) * 0.7);
+                    pos.setZ(i, pos.getZ(i) + (Math.random() - 0.5) * 0.7);
+                }
+            }
+            rockGeo.computeVertexNormals();
+
+            const rockMat = new THREE.MeshStandardMaterial({
+                color: biomes[0].rockColor,
+                flatShading: true,
+                roughness: 0.85
+            });
+            rockBaseMesh = new THREE.Mesh(rockGeo, rockMat);
+            rockBaseMesh.position.y = -3.1;
+            islandGroup.add(rockBaseMesh);
+
+            // Top Grass / Soil Cap
+            const capGeo = new THREE.CylinderGeometry(7.4, 7.1, 0.8, 9);
+            capGeo.computeVertexNormals();
+            const capMat = new THREE.MeshStandardMaterial({
+                color: biomes[0].topSoilColor,
+                flatShading: true,
+                roughness: 0.7
+            });
+            topGrassCapMesh = new THREE.Mesh(capGeo, capMat);
+            topGrassCapMesh.position.y = 0.2;
+            islandGroup.add(topGrassCapMesh);
+        }
+
+        // 2. Low-Poly Grass Tufts, Faceted Rocks & Pine/Oak Trees (Image 2 & 3)
+        function buildLowPolyFloraAndRocks() {
+            pineGroup = new THREE.Group();
+            islandGroup.add(pineGroup);
+
+            const grassMat = new THREE.MeshStandardMaterial({
+                color: biomes[0].grassColor,
+                flatShading: true,
+                roughness: 0.6
+            });
+
+            // 95 Faceted Low-Poly Grass Blades (like Image 2 & 3)
+            const bladeGeo = new THREE.ConeGeometry(0.16, 0.75, 4);
+            for (let i = 0; i < 95; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 0.8 + Math.random() * 5.6;
+                const blade = new THREE.Mesh(bladeGeo, grassMat);
+                blade.position.set(
+                    Math.cos(angle) * radius,
+                    0.85,
+                    Math.sin(angle) * radius
+                );
+                blade.rotation.y = Math.random() * Math.PI;
+                blade.rotation.z = (Math.random() - 0.5) * 0.35;
+                blade.scale.setScalar(0.7 + Math.random() * 0.8);
+                islandGroup.add(blade);
+                grassMeshes.push(blade);
+            }
+
+            // Low-Poly Pine & Faceted Round Trees
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, flatShading: true });
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x15803d, flatShading: true });
+
+            const treeCoords = [
+                { x: -4.2, z: -2.8, scale: 1.15, type: 'pine' },
+                { x: 4.5, z: -2.5, scale: 0.95, type: 'round' },
+                { x: -1.8, z: -4.6, scale: 1.25, type: 'pine' },
+                { x: 2.8, z: -4.2, scale: 0.85, type: 'pine' }
+            ];
+
+            treeCoords.forEach(tc => {
+                const tGroup = new THREE.Group();
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.32, 1.6, 5), trunkMat);
+                trunk.position.y = 0.8;
+                tGroup.add(trunk);
+
+                if (tc.type === 'pine') {
+                    for (let l = 0; l < 3; l++) {
+                        const cone = new THREE.Mesh(new THREE.ConeGeometry(1.35 - l * 0.3, 1.5, 6), leafMat);
+                        cone.position.y = 1.8 + l * 0.85;
+                        tGroup.add(cone);
+                    }
+                } else {
+                    // Faceted Muck Oak Crown (Image 2)
+                    const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(1.4, 0), leafMat);
+                    crown.position.y = 2.3;
+                    tGroup.add(crown);
+                }
+
+                tGroup.position.set(tc.x, 0.5, tc.z);
+                tGroup.scale.setScalar(tc.scale);
+                pineGroup.add(tGroup);
+            });
+
+            // Faceted Boulders (Image 2)
+            const boulderMat = new THREE.MeshStandardMaterial({ color: 0x64748b, flatShading: true });
+            const boulderPositions = [
+                [-4.8, 0.7, 1.8, 0.85],
+                [4.8, 0.7, 1.4, 0.7],
+                [-2.4, 0.6, 4.3, 0.55]
+            ];
+            boulderPositions.forEach(bp => {
+                const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(bp[3], 0), boulderMat);
+                rock.position.set(bp[0], bp[1], bp[2]);
+                rock.rotation.set(Math.random(), Math.random(), 0);
+                islandGroup.add(rock);
+            });
+        }
+
+        // 3. Muck Glowing Cyan Rune Monolith (Image 1 Left Side: Stone slab with glowing cyan 'Y' Algiz rune)
+        function buildGlowingRuneMonolith() {
+            const shrineGroup = new THREE.Group();
+            shrineGroup.position.set(-3.2, 0.6, 0.4);
+            shrineGroup.rotation.y = 0.45;
+
+            // Stone Monolith Slab
+            const slabGeo = new THREE.BoxGeometry(1.15, 2.3, 0.45);
+            const slabMat = new THREE.MeshStandardMaterial({ color: 0x334155, flatShading: true, roughness: 0.9 });
+            const slab = new THREE.Mesh(slabGeo, slabMat);
+            slab.position.y = 1.15;
+            shrineGroup.add(slab);
+
+            // Glowing Cyan Algiz Rune ('ᛉ') Bars on the front face
+            const runeMat = new THREE.MeshBasicMaterial({ color: 0x00f5d4 });
+            const stem = new THREE.Mesh(new THREE.BoxGeometry(0.11, 1.25, 0.06), runeMat);
+            stem.position.set(0, 1.2, 0.24);
+            shrineGroup.add(stem);
+
+            const branchL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.55, 0.06), runeMat);
+            branchL.position.set(-0.18, 1.45, 0.24);
+            branchL.rotation.z = 0.65;
+            shrineGroup.add(branchL);
+
+            const branchR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.55, 0.06), runeMat);
+            branchR.position.set(0.18, 1.45, 0.24);
+            branchR.rotation.z = -0.65;
+            shrineGroup.add(branchR);
+
+            islandGroup.add(shrineGroup);
+        }
+
+        // 4. Coral & Cyan Mushrooms + Cavern Crystal Stalactites (Image 1)
+        function buildCavernStalactitesAndMushrooms() {
+            mushroomGroup = new THREE.Group();
+            islandGroup.add(mushroomGroup);
+
+            const stemMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, flatShading: true });
+            const redCapMat = new THREE.MeshStandardMaterial({ color: 0xfb7185, flatShading: true, emissive: 0x881337, emissiveIntensity: 0.3 });
+            const cyanCapMat = new THREE.MeshStandardMaterial({ color: 0x22d3ee, flatShading: true, emissive: 0x0891b2, emissiveIntensity: 0.4 });
+
+            const shroomSpots = [
+                { x: 3.4, z: 2.2, s: 1.0, cyan: false },
+                { x: 3.9, z: 2.6, s: 0.7, cyan: false },
+                { x: 3.1, z: 2.8, s: 0.55, cyan: false },
+                { x: -2.2, z: 1.4, s: 0.85, cyan: true },
+                { x: -2.6, z: 1.8, s: 0.6, cyan: true }
+            ];
+
+            shroomSpots.forEach(sp => {
+                const sg = new THREE.Group();
+                const st = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.9, 5), stemMat);
+                st.position.y = 0.45;
+                sg.add(st);
+
+                const cap = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.45, 6), sp.cyan ? cyanCapMat : redCapMat);
+                cap.position.y = 0.95;
+                sg.add(cap);
+
+                sg.position.set(sp.x, 0.55, sp.z);
+                sg.scale.setScalar(sp.s);
+                mushroomGroup.add(sg);
+            });
+
+            // Crystal Cavern Arch & Stalactites (emphasized in Biome 2)
+            cavernArchGroup = new THREE.Group();
+            const iceMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, flatShading: true, roughness: 0.5 });
+            for (let i = 0; i < 5; i++) {
+                const stal = new THREE.Mesh(new THREE.ConeGeometry(0.45, 2.2, 5), iceMat);
+                stal.rotation.x = Math.PI;
+                stal.position.set(-4 + i * 2, 6.2 + (i % 2) * 0.6, -3.5);
+                cavernArchGroup.add(stal);
+            }
+            cavernArchGroup.visible = false;
+            islandGroup.add(cavernArchGroup);
+        }
+
+        // 5. Risk of Rain 2 Primordial Teleporter Pad + Web3 Crystal Core
+        function buildPrimordialTeleporter() {
+            const tpGroup = new THREE.Group();
+            tpGroup.position.set(2.3, 0.62, -0.3);
+
+            const pad = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.65, 1.85, 0.22, 8),
+                new THREE.MeshStandardMaterial({ color: 0x1e293b, flatShading: true })
+            );
+            tpGroup.add(pad);
+
+            // Glowing Ring
+            teleporterRing = new THREE.Mesh(
+                new THREE.TorusGeometry(1.25, 0.06, 6, 16),
+                new THREE.MeshBasicMaterial({ color: 0xf43f5e })
+            );
+            teleporterRing.rotation.x = Math.PI / 2;
+            teleporterRing.position.y = 0.14;
+            tpGroup.add(teleporterRing);
+
+            // Floating Web3 Ethereum-style Octahedron Crystal inside Teleporter
+            crystalCore = new THREE.Mesh(
+                new THREE.OctahedronGeometry(0.55, 0),
+                new THREE.MeshStandardMaterial({
+                    color: 0x22d3ee,
+                    emissive: 0x0891b2,
+                    emissiveIntensity: 0.6,
+                    flatShading: true
+                })
+            );
+            crystalCore.position.y = 1.35;
+            tpGroup.add(crystalCore);
+
+            islandGroup.add(tpGroup);
+        }
+
+        // 6. Low-Poly Faceted Knight Avatar with Glowing Bifurcated Magma Sword (Image 1!)
+        function buildLowPolyKnightAvatar() {
+            knightGroup = new THREE.Group();
+            knightGroup.position.set(-0.3, 0.62, 2.1);
+            knightGroup.rotation.y = 0.35;
+
+            const armorMat = new THREE.MeshStandardMaterial({ color: 0x64748b, flatShading: true, metalness: 0.4, roughness: 0.5 });
+            const darkArmorMat = new THREE.MeshStandardMaterial({ color: 0x334155, flatShading: true });
+            const goldTrimMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, flatShading: true, emissive: 0xca8a04, emissiveIntensity: 0.2 });
+
+            // Legs
+            const legGeo = new THREE.BoxGeometry(0.28, 0.75, 0.28);
+            const legL = new THREE.Mesh(legGeo, darkArmorMat);
+            legL.position.set(-0.2, 0.38, 0);
+            const legR = new THREE.Mesh(legGeo, darkArmorMat);
+            legR.position.set(0.2, 0.38, 0);
+            knightGroup.add(legL, legR);
+
+            // Torso & Tunic Skirt
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.85, 0.46), armorMat);
+            torso.position.y = 1.15;
+            knightGroup.add(torso);
+
+            // Spiked Gold Shoulder Pauldrons (Directly matching Image 1!)
+            const pauldronL = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.45, 4), goldTrimMat);
+            pauldronL.position.set(-0.52, 1.52, 0);
+            pauldronL.rotation.z = 0.5;
+            const pauldronR = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.45, 4), goldTrimMat);
+            pauldronR.position.set(0.52, 1.52, 0);
+            pauldronR.rotation.z = -0.5;
+            knightGroup.add(pauldronL, pauldronR);
+
+            // Faceted Knight Helmet with Glowing Visor
+            const helm = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.52, 6), armorMat);
+            helm.position.y = 1.88;
+            knightGroup.add(helm);
+
+            const visor = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x22d3ee }));
+            visor.position.set(0, 1.9, 0.26);
+            knightGroup.add(visor);
+
+            // Sword Arm Pivot & Bifurcated Glowing Magma Greatsword (Image 1!)
+            swordPivot = new THREE.Group();
+            swordPivot.position.set(0.55, 1.35, 0.15);
+
+            const hilt = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.12, 0.14), darkArmorMat);
+            hilt.position.set(0, 0.25, 0.35);
+            swordPivot.add(hilt);
+
+            const magmaMat = new THREE.MeshBasicMaterial({ color: 0xff6b35 });
+            const coreMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+
+            // Twin Prongs of the Bifurcated Greatsword
+            const prongL = new THREE.Mesh(new THREE.BoxGeometry(0.11, 1.65, 0.08), magmaMat);
+            prongL.position.set(-0.12, 1.15, 0.35);
+            const prongR = new THREE.Mesh(new THREE.BoxGeometry(0.11, 1.65, 0.08), magmaMat);
+            prongR.position.set(0.12, 1.15, 0.35);
+            const glowCenter = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.4, 0.09), coreMat);
+            glowCenter.position.set(0, 1.05, 0.35);
+
+            swordPivot.add(prongL, prongR, glowCenter);
+            swordPivot.rotation.x = 0.55;
+            swordPivot.rotation.z = -0.25;
+
+            knightGroup.add(swordPivot);
+            islandGroup.add(knightGroup);
+        }
+
+        function triggerKnightSwing() {
+            knightSwingTime = 1.0;
+        }
+
+        // 7. Orbiting Mini-Islands & Blockchain Crystal Nodes
+        function buildOrbitingWeb3Shards() {
+            const shardMat = new THREE.MeshStandardMaterial({
+                color: 0x22d3ee,
+                emissive: 0x0284c7,
+                emissiveIntensity: 0.4,
+                flatShading: true
+            });
+
+            for (let i = 0; i < 14; i++) {
+                const angle = (i / 14) * Math.PI * 2;
+                const radius = 9.5 + Math.random() * 5.5;
+                const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.28 + Math.random() * 0.25, 0), shardMat);
+                shard.userData = {
+                    baseAngle: angle,
+                    radius,
+                    yOffset: -1 + Math.random() * 6,
+                    speed: 0.15 + Math.random() * 0.2
+                };
+                scene.add(shard);
+                floatingShards.push(shard);
+            }
+        }
+
+        // Biome Switcher Function
+        function setBiome(index) {
+            currentBiome = index;
+            const b = biomes[index];
+            playSfx('shrine');
+
+            scene.background.setHex(b.skyColor);
+            scene.fog.color.setHex(b.fogColor);
+            dirLight.color.setHex(b.sunColor);
+            ambLight.color.setHex(b.ambientColor);
+            topGrassCapMesh.material.color.setHex(b.topSoilColor);
+            rockBaseMesh.material.color.setHex(b.rockColor);
+            runeLight.color.setHex(b.runeColor);
+
+            grassMeshes.forEach(g => g.material.color.setHex(b.grassColor));
+            cavernArchGroup.visible = (index === 1);
+
+            // Update top navbar active state
+            [0, 1, 2].forEach(i => {
+                const btn = document.getElementById(`biome-btn-${i}`);
+                if (!btn) return;
+                if (i === index) {
+                    btn.className = 'biome-btn px-2.5 py-1 rounded text-[11px] font-mono font-semibold transition-all bg-cyan-500/20 text-cyan-300 border border-cyan-400/60';
+                } else {
+                    btn.className = 'biome-btn px-2.5 py-1 rounded text-[11px] font-mono font-semibold transition-all text-slate-400 hover:text-cyan-300';
+                }
+            });
+
+            showToast(`🌍 BIOME SHIFTED: ${b.name}`, '3D Low-Poly lighting, flora & atmosphere updated.');
+        }
+
+        // Mouse Drag & Parallax Camera Interaction
+        let mouseX = 0, mouseY = 0;
+        let isDragging = false;
+        let prevDragX = 0;
+        let manualIslandRotation = 0;
+
+        function setupMouseCameraParallax() {
+            window.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+                if (isDragging) {
+                    const dx = e.clientX - prevDragX;
+                    manualIslandRotation += dx * 0.008;
+                    prevDragX = e.clientX;
+                }
+            });
+
+            window.addEventListener('mousedown', (e) => {
+                if (e.target.id === 'world-canvas') {
+                    isDragging = true;
+                    prevDragX = e.clientX;
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Main Animation Loop
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+
+            if (islandGroup) {
+                // Smooth idle rotation + teleporter spin boost + user drag
+                islandBoostSpin *= 0.94;
+                islandGroup.rotation.y = t * 0.14 + manualIslandRotation + islandBoostSpin;
+                islandGroup.position.y = -1.2 + Math.sin(t * 1.4) * 0.22;
+            }
+
+            // Animate Knight Sword Swing
+            if (swordPivot) {
+                if (knightSwingTime > 0) {
+                    knightSwingTime = Math.max(0, knightSwingTime - 0.08);
+                    swordPivot.rotation.x = 0.55 + Math.sin(knightSwingTime * Math.PI * 2) * 1.6;
+                    swordPivot.rotation.z = -0.25 - Math.sin(knightSwingTime * Math.PI) * 0.9;
+                } else {
+                    swordPivot.rotation.x = 0.55 + Math.sin(t * 2.5) * 0.08;
+                }
+            }
+
+            // Spin Teleporter Web3 Crystal Core
+            if (crystalCore) {
+                crystalCore.rotation.y = t * 1.8;
+                crystalCore.position.y = 1.35 + Math.sin(t * 3) * 0.18;
+            }
+
+            // Orbiting Web3 Shards
+            floatingShards.forEach((s, idx) => {
+                const u = s.userData;
+                const a = u.baseAngle + t * u.speed;
+                s.position.set(
+                    Math.cos(a) * u.radius,
+                    u.yOffset + Math.sin(t * 2 + idx) * 0.45,
+                    Math.sin(a) * u.radius
+                );
+                s.rotation.x += 0.015;
+                s.rotation.y += 0.02;
+            });
+
+            // Smooth Camera Parallax with Mouse + Scroll Depth
+            const scrollY = window.scrollY || 0;
+            const targetCamX = mouseX * 1.6;
+            const targetCamY = 6.5 - mouseY * 1.1 - Math.min(2.5, scrollY * 0.0008);
+            camera.position.x += (targetCamX - camera.position.x) * 0.05;
+            camera.position.y += (targetCamY - camera.position.y) * 0.05;
+            camera.lookAt(1.2, 0.2, 0);
+
+            renderer.render(scene, camera);
+            updateFxOverlay();
+        }
+
+        // Initialize Everything on Window Load
+        window.onload = function () {
+            initThreeWorld();
+            renderItems();
+            renderRunLogs();
+            renderShrineFeed();
+            updateGrowthSimulation();
+            updateLiveClock();
+            renderCritCounter();
+            renderCampfireLogs();
+            animate();
+        };
+    </script>
+</body>
+</html>
